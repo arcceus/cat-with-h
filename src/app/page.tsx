@@ -1,103 +1,152 @@
-import Image from "next/image";
+"use client";
+import React, { useState, useEffect, useRef } from 'react';
+import ChatPanel from '../components/ChatPanel';
+import CanvasPanel from '../components/CanvasPanel';
+import ResizableDivider from '../components/ResizableDivider';
+import { useLocalStorage } from '../hooks/useLocalStorage';
+import { useTheme } from '../hooks/useTheme';
 
-export default function Home() {
+function App() {
+  const [draggedText, setDraggedText] = useState<string | null>(null);
+  const [sourceMsgId, setSourceMsgId] = useState<string | null>(null);
+  const [sourceChatId, setSourceChatId] = useState<string | null>(null);
+  const [highlightedMessageId, setHighlightedMessageId] = useState<string | null>(null);
+  const [containerWidth, setContainerWidth] = useState(window.innerWidth);
+  const [leftPanelWidth, setLeftPanelWidth] = useLocalStorage('leftPanelWidth', 500);
+  const [currentChatId, setCurrentChatId] = useState('project-discussion');
+  const [theme, setTheme] = useTheme();
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const minLeftWidth = 400;
+  const minRightWidth = 450;
+
+  useEffect(() => {
+    const handleResize = () => {
+      setContainerWidth(window.innerWidth);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Ensure panel width constraints are respected
+  useEffect(() => {
+    const maxLeftWidth = containerWidth - minRightWidth;
+    if (leftPanelWidth > maxLeftWidth) {
+      setLeftPanelWidth(maxLeftWidth);
+    } else if (leftPanelWidth < minLeftWidth) {
+      setLeftPanelWidth(minLeftWidth);
+    }
+  }, [containerWidth, leftPanelWidth, setLeftPanelWidth]);
+
+  const handleTextDrag = (text: string, messageId: string, chatId: string) => {
+    setDraggedText(text);
+    setSourceMsgId(messageId);
+    setSourceChatId(chatId);
+  };
+
+  const handleTextDragComplete = () => {
+    setDraggedText(null);
+    setSourceMsgId(null);
+    setSourceChatId(null);
+  };
+
+  const handleBlockClick = (messageId: string, chatId?: string) => {
+    // Switch to the correct chat if needed
+    if (chatId && chatId !== currentChatId) {
+      setCurrentChatId(chatId);
+    }
+    setHighlightedMessageId(messageId);
+  };
+
+  const handleHighlightComplete = () => {
+    setHighlightedMessageId(null);
+  };
+
+  const handlePanelResize = (newLeftWidth: number) => {
+    setLeftPanelWidth(newLeftWidth);
+  };
+
+  const handleThemeToggle = () => {
+    setTheme(theme === 'light' ? 'dark' : 'light');
+  };
+
+  const handleNewChat = () => {
+    // Create a new chat session
+    const newChatId = `new-chat-${Date.now()}`;
+    setCurrentChatId(newChatId);
+    setHighlightedMessageId(null);
+    setDraggedText(null);
+    setSourceMsgId(null);
+    setSourceChatId(null);
+  };
+
+  const handleChatSelect = (chatId: string) => {
+    setCurrentChatId(chatId);
+    setHighlightedMessageId(null);
+  };
+
+  const handleSidebarToggle = () => {
+    setIsSidebarOpen(!isSidebarOpen);
+  };
+
+  const rightPanelWidth = containerWidth - leftPanelWidth - 1; // -1 for divider
+
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
+    <div 
+      ref={containerRef}
+      className="h-screen w-screen flex overflow-hidden"
+      style={{ backgroundColor: '#272725' }}
+    >
+      {/* Left Panel - Chat */}
+      <div 
+        className="flex-shrink-0 border-r"
+        style={{ 
+          width: leftPanelWidth,
+          borderColor: '#3a3835'
+        }}
+      >
+        <ChatPanel 
+          theme={theme}
+          currentChatId={currentChatId}
+          onTextDrag={handleTextDrag}
+          highlightedMessageId={highlightedMessageId}
+          onHighlightComplete={handleHighlightComplete}
+          onNewChat={handleNewChat}
+          onThemeToggle={handleThemeToggle}
+          onChatSelect={handleChatSelect}
+          isSidebarOpen={isSidebarOpen}
+          onSidebarToggle={handleSidebarToggle}
         />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+      </div>
+      
+      {/* Resizable Divider */}
+      <ResizableDivider
+        onResize={handlePanelResize}
+        initialLeftWidth={leftPanelWidth}
+        minLeftWidth={minLeftWidth}
+        minRightWidth={minRightWidth}
+        containerWidth={containerWidth}
+      />
+      
+      {/* Right Panel - Canvas */}
+      <div 
+        className="flex-1 min-w-0"
+        style={{ width: rightPanelWidth }}
+      >
+        <CanvasPanel 
+          draggedText={draggedText}
+          sourceMsgId={sourceMsgId}
+          sourceChatId={sourceChatId}
+          theme={theme}
+          onTextDragComplete={handleTextDragComplete}
+          onBlockClick={handleBlockClick}
+        />
+      </div>
     </div>
   );
 }
+
+export default App;
