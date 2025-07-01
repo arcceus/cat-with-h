@@ -416,14 +416,12 @@ const CanvasPanel: React.FC<CanvasPanelProps> = ({
           <h2 className="text-xl font-semibold text-white">
             Canvas Workspace
           </h2>
-          <span className="text-sm text-gray-400">
-            ({nodes.length} blocks, {connections.length} connections)
-          </span>
+          
         </div>
         
         <div className="flex items-center gap-4">
           {/* Zoom Controls */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center ">
             <Button
               variant="ghost"
               size="icon"
@@ -439,7 +437,7 @@ const CanvasPanel: React.FC<CanvasPanelProps> = ({
               variant="ghost"
               size="icon"
               onClick={handleZoomIn}
-              className="h-9 w-9 text-white hover:bg-white/10"
+              className="h-8 w-9 text-white hover:bg-white/10"
             >
               <ZoomIn className="h-4 w-4" />
             </Button>

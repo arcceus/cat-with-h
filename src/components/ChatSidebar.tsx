@@ -28,6 +28,8 @@ interface ChatSidebarProps {
   onNewChat: () => void;
   onChatDelete?: (chatId: string) => void;
   onChatUpdate?: (chatId: string, updates: Partial<ChatSession>) => void;
+  isCollapsed?: boolean;
+  setIsCollapsed?: (collapsed: boolean) => void;
 }
 
 const ChatSidebar: React.FC<ChatSidebarProps> = ({
@@ -38,10 +40,11 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
   onChatSelect,
   onNewChat,
   onChatDelete,
-  onChatUpdate
+  onChatUpdate,
+  isCollapsed = false,
+  setIsCollapsed = () => {},
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
-  const [isCollapsed, setIsCollapsed] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const sidebarRef = useRef<HTMLDivElement>(null);
 
@@ -142,7 +145,11 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
     }
   };
 
-  const sidebarWidth = isCollapsed ? 80 : 320;
+  const sidebarWidth = isCollapsed ? 80 : 320 ;
+
+  if (sidebarWidth === 320 && sidebarRef.current) {
+
+  }
 
   return (
     <>
@@ -173,7 +180,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
               onClick={() => setIsCollapsed(!isCollapsed)}
               variant="ghost"
               size="icon"
-              className="h-8 w-8 text-gray-400 hover:text-white hover:bg-white/10"
+              className="h-9 w-8 text-gray-400 hover:text-white hover:bg-white/10"
               title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
             >
               {isCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
@@ -183,7 +190,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
               onClick={onToggle}
               variant="ghost"
               size="icon"
-              className="h-8 w-8 text-gray-400 hover:text-white hover:bg-white/10"
+              className="h-9 w-8 text-gray-400 hover:text-white hover:bg-white/10"
               title="Close sidebar (Ctrl+B)"
             >
               <X className="h-4 w-4" />
@@ -226,7 +233,6 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
             {!isCollapsed && (
               <>
                 <span>New Chat</span>
-                <span className="ml-auto text-xs opacity-70">⌘⇧N</span>
               </>
             )}
           </Button>
@@ -248,12 +254,14 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
                     className={cn(
                       "group relative flex items-start gap-3 p-3 rounded-lg cursor-pointer transition-all duration-200",
                       currentChatId === chat.id
-                        ? "bg-blue-600/20 border border-blue-500/30"
+                        ? "bg-white/10"
                         : "hover:bg-white/5",
                       isCollapsed && "justify-center"
                     )}
                     title={isCollapsed ? chat.title : undefined}
+                    
                   >
+                    
                     {/* Chat Icon */}
                     <div
                       className={cn(
@@ -278,33 +286,15 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between">
                           <h4 className={cn(
-                            "font-medium truncate",
-                            currentChatId === chat.id ? "text-blue-300" : "text-white"
+                            "font-medium text-white truncate"
                           )}>
                             {chat.title}
+                            
                           </h4>
                           <div className="flex items-center gap-2">
                             <span className="text-xs text-gray-500">
-                              {formatTimestamp(chat.lastActivity)}
-                            </span>
-                            {currentChatId === chat.id && (
-                              <div className="w-2 h-2 bg-blue-400 rounded-full flex-shrink-0" />
-                            )}
-                          </div>
-                        </div>
-                        
-                        <div className="text-sm text-gray-400 mt-1 truncate">
-                          {getLastMessage(chat)}
-                        </div>
-                        
-                        <div className="flex items-center justify-between mt-2">
-                          <div className="text-xs text-gray-500">
-                            {chat.messages.length} messages
-                          </div>
-                          
-                          {/* Delete Button */}
-                          {onChatDelete && chatSessions.length > 1 && (
-                            <Button
+                              {/* {formatTimestamp(chat.lastActivity)} */}
+                              <Button
                               onClick={(e) => handleDeleteChat(chat.id, e)}
                               variant="ghost"
                               size="icon"
@@ -312,7 +302,15 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
                             >
                               <X className="h-3 w-3" />
                             </Button>
-                          )}
+                            </span>
+                            {/* {currentChatId === chat.id && (
+                              <div className="w-2 h-2 bg-blue-400 rounded-full flex-shrink-0" />
+                            )} */}
+                          </div>
+                        </div>
+                        
+                        <div className="text-sm text-gray-400 mt-1 truncate text-wrap">
+                          {getLastMessage(chat)}
                         </div>
                       </div>
                     )}
@@ -328,12 +326,12 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
           <div className="p-3 border-t text-xs text-gray-500" style={{ borderColor: '#3a3835' }}>
             <div className="space-y-1">
               <div className="flex justify-between">
-                <span>⌘B Toggle</span>
+                <span>Ctrl + B Toggle</span>
                 <span>↑↓ Navigate</span>
               </div>
               <div className="flex justify-between">
-                <span>⌘F Search</span>
-                <span>⌘⇧N New</span>
+                <span>Ctrl + F Search</span>
+                <span>Ctrl + Shift + N New</span>
               </div>
             </div>
           </div>

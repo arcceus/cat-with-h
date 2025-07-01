@@ -37,7 +37,7 @@ const ResizableDivider: React.FC<ResizableDividerProps> = ({
     const maxLeftWidth = containerWidth - minRightWidth;
 
     const clampedWidth = Math.max(
-      minLeftWidth,
+      minLeftWidth = minRightWidth,
       Math.min(newLeftWidth, maxLeftWidth)
     );
 

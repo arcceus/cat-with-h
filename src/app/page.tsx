@@ -16,6 +16,7 @@ function App() {
   const [currentChatId, setCurrentChatId] = useState('project-discussion');
   const [theme, setTheme] = useTheme();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -118,6 +119,8 @@ function App() {
           onThemeToggle={handleThemeToggle}
           onChatSelect={handleChatSelect}
           isSidebarOpen={isSidebarOpen}
+          isSidebarCollapsed={isSidebarCollapsed}
+          setIsSidebarCollapsed={setIsSidebarCollapsed}
           onSidebarToggle={handleSidebarToggle}
         />
       </div>

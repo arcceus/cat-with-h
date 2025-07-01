@@ -31,6 +31,8 @@ interface ChatPanelProps {
   onChatSelect?: (chatId: string) => void;
   isSidebarOpen: boolean;
   onSidebarToggle: () => void;
+  isSidebarCollapsed?: boolean;
+  setIsSidebarCollapsed?: (collapsed: boolean) => void;
 }
 
 const ChatPanel: React.FC<ChatPanelProps> = ({ 
@@ -43,7 +45,9 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
   onThemeToggle,
   onChatSelect,
   isSidebarOpen,
-  onSidebarToggle
+  onSidebarToggle,
+  isSidebarCollapsed = false,
+  setIsSidebarCollapsed = () => {},
 }) => {
   const [chatSessions, setChatSessions] = useState<ChatSession[]>([
     {
@@ -222,7 +226,7 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
       }));
       
       setIsTyping(false);
-    }, 1000 + Math.random() * 2000);
+    }, 10);
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -296,12 +300,18 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
         onNewChat={handleNewChatClick}
         onChatDelete={handleChatDelete}
         onChatUpdate={handleChatUpdate}
+        isCollapsed={isSidebarCollapsed}
+        setIsCollapsed={setIsSidebarCollapsed}
       />
 
       {/* Main Chat Content */}
       <div className={cn(
         "flex flex-col h-full transition-all duration-300",
-        isSidebarOpen ? "lg:ml-80" : "ml-0"
+        isSidebarOpen
+          ? isSidebarCollapsed
+            ? "lg:ml-20" // collapsed sidebar width
+            : "lg:ml-80" // expanded sidebar width
+          : "ml-0"
       )}>
         {/* Top Navigation Bar */}
         <div 
@@ -322,7 +332,6 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
                 <Menu className="h-4 w-4" />
               </Button>
             )}
-            <MessageSquare className="w-6 h-6 text-blue-400" />
             <h1 className="text-xl font-semibold text-white truncate">
               {currentChat?.title || 'AI Chat'}
             </h1>
