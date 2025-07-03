@@ -180,7 +180,10 @@ const CanvasPanel: React.FC<CanvasPanelProps> = ({
   // Handle dropped text from chat
   useEffect(() => {
     if (draggedText && canvasRef.current) {
-      const rect = canvasRef.current.getBoundingClientRect();
+      // Use the parent of canvasRef as the viewport
+      const viewport = canvasRef.current.parentElement;
+      if (!viewport) return;
+      const rect = viewport.getBoundingClientRect();
       const centerX = (rect.width / 2 - pan.x) / zoom;
       const centerY = (rect.height / 2 - pan.y) / zoom;
       
@@ -221,25 +224,6 @@ const CanvasPanel: React.FC<CanvasPanelProps> = ({
     setNodes(prev => prev.map(node =>
       node.id === nodeId ? { ...node, x: newX, y: newY } : node
     ));
-    // Update connections in real-time
-    const node = nodes.find(n => n.id === nodeId);
-    if (node) {
-      setConnections(prev => prev.map(conn => {
-        if (conn.from === nodeId) {
-          return {
-            ...conn,
-            fromPoint: { x: newX + node.width / 2, y: newY + node.height / 2 }
-          };
-        }
-        if (conn.to === nodeId) {
-          return {
-            ...conn,
-            toPoint: { x: newX + node.width / 2, y: newY + node.height / 2 }
-          };
-        }
-        return conn;
-      }));
-    }
   };
 
   const handleBlockClick = (nodeId: string) => {
@@ -258,29 +242,6 @@ const CanvasPanel: React.FC<CanvasPanelProps> = ({
     setNodes(prev => prev.map(node => 
       node.id === nodeId ? { ...node, width, height } : node
     ));
-
-    // Update connections
-    setConnections(prev => prev.map(conn => {
-      if (conn.from === nodeId) {
-        const node = nodes.find(n => n.id === nodeId);
-        if (node) {
-          return {
-            ...conn,
-            fromPoint: { x: node.x + width / 2, y: node.y + height / 2 }
-          };
-        }
-      }
-      if (conn.to === nodeId) {
-        const node = nodes.find(n => n.id === nodeId);
-        if (node) {
-          return {
-            ...conn,
-            toPoint: { x: node.x + width / 2, y: node.y + height / 2 }
-          };
-        }
-      }
-      return conn;
-    }));
   };
 
   const handleMouseMove = useCallback((e: MouseEvent) => {
@@ -298,26 +259,6 @@ const CanvasPanel: React.FC<CanvasPanelProps> = ({
       setNodes(prev => prev.map(node => 
         node.id === draggingNode ? { ...node, ...newPosition } : node
       ));
-
-      // Update connections in real-time
-      const node = nodes.find(n => n.id === draggingNode);
-      if (node) {
-        setConnections(prev => prev.map(conn => {
-          if (conn.from === draggingNode) {
-            return {
-              ...conn,
-              fromPoint: { x: newPosition.x + node.width / 2, y: newPosition.y + node.height / 2 }
-            };
-          }
-          if (conn.to === draggingNode) {
-            return {
-              ...conn,
-              toPoint: { x: newPosition.x + node.width / 2, y: newPosition.y + node.height / 2 }
-            };
-          }
-          return conn;
-        }));
-      }
     }
     
     if (isPanning && canvasRef.current) {
@@ -386,6 +327,22 @@ const CanvasPanel: React.FC<CanvasPanelProps> = ({
     connectionCount: canvas.connections.length
   }));
 
+  // Center the initial pan on the canvas
+  useEffect(() => {
+    if (canvasRef.current) {
+      const container = canvasRef.current.parentElement;
+      if (container) {
+        const containerRect = container.getBoundingClientRect();
+        const canvasWidth = 5000;
+        const canvasHeight = 5000;
+        setPan({
+          x: (containerRect.width / 2) - (canvasWidth / 2),
+          y: (containerRect.height / 2) - (canvasHeight / 2)
+        });
+      }
+    }
+  }, []);
+
   return (
     <div className="flex flex-col h-full" style={{ backgroundColor: '#272725' }}>
       {/* Toolbar */}
@@ -441,15 +398,23 @@ const CanvasPanel: React.FC<CanvasPanelProps> = ({
       <div className="flex-1 relative overflow-hidden">
         <div
           ref={canvasRef}
-          className="w-full h-full cursor-move"
+          className="absolute top-0 left-0 cursor-move"
           onMouseDown={handleCanvasMouseDown}
           style={{
+            width: 5000,
+            height: 5000,
             transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
-            transformOrigin: '0 0'
+            transformOrigin: '0 0',
+            backgroundImage: `
+              linear-gradient(to right, rgba(255,255,255,0.06) 1px, transparent 1px),
+              linear-gradient(to bottom, rgba(255,255,255,0.06) 1px, transparent 1px)
+            `,
+            backgroundSize: '32px 32px',
+            backgroundPosition: '0 0',
           }}
         >
           {/* SVG for connections */}
-          <svg
+          {/* <svg
             ref={svgRef}
             className="absolute inset-0 w-full h-full pointer-events-none"
             style={{ zIndex: 10 }}
@@ -469,7 +434,7 @@ const CanvasPanel: React.FC<CanvasPanelProps> = ({
                 />
               </marker>
             </defs>
-          </svg>
+          </svg> */}
 
           {/* Text Blocks */}
           {nodes.map((node) => (
@@ -490,7 +455,6 @@ const CanvasPanel: React.FC<CanvasPanelProps> = ({
               onDrag={handleBlockDrag}
               onDelete={handleDeleteNode}
               onClick={handleBlockClick}
-              // onConnectionStart={handleConnectionStart}
               onResize={handleBlockResize}
             />
           ))}

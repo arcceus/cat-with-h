@@ -1,9 +1,7 @@
 "use client";
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import ChatPanel from '../components/ChatPanel';
 import CanvasPanel from '../components/CanvasPanel';
-import ResizableDivider from '../components/ResizableDivider';
-import { useLocalStorage } from '../hooks/useLocalStorage';
 import { useTheme } from '../hooks/useTheme';
 
 function App() {
@@ -11,36 +9,14 @@ function App() {
   const [sourceMsgId, setSourceMsgId] = useState<string | null>(null);
   const [sourceChatId, setSourceChatId] = useState<string | null>(null);
   const [highlightedMessageId, setHighlightedMessageId] = useState<string | null>(null);
-  const [containerWidth, setContainerWidth] = useState(0);
-  const [leftPanelWidth, setLeftPanelWidth] = useLocalStorage('leftPanelWidth', 500);
   const [currentChatId, setCurrentChatId] = useState('project-discussion');
   const [theme, setTheme] = useTheme();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isCanvasVisible, setIsCanvasVisible] = useState(true);
-  
+  const [leftPanelRatio, setLeftPanelRatio] = useState(50); // Percentage - no localStorage
+  const [isDragging, setIsDragging] = useState(false);
+
   const containerRef = useRef<HTMLDivElement>(null);
-
-  const minLeftWidth = 400;
-  const minRightWidth = 450;
-
-  useEffect(() => {
-    setContainerWidth(typeof window !== 'undefined' ? window.innerWidth : 0);
-    const handleResize = () => {
-      setContainerWidth(window.innerWidth);
-    };
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
-  // Ensure panel width constraints are respected
-  useEffect(() => {
-    const maxLeftWidth = containerWidth - minRightWidth;
-    if (leftPanelWidth > maxLeftWidth) {
-      setLeftPanelWidth(maxLeftWidth);
-    } else if (leftPanelWidth < minLeftWidth) {
-      setLeftPanelWidth(minLeftWidth);
-    }
-  }, [containerWidth, leftPanelWidth, setLeftPanelWidth]);
 
   const handleTextDrag = (text: string, messageId: string, chatId: string) => {
     setDraggedText(text);
@@ -55,7 +31,6 @@ function App() {
   };
 
   const handleBlockClick = (messageId: string, chatId?: string) => {
-    // Switch to the correct chat if needed
     if (chatId && chatId !== currentChatId) {
       setCurrentChatId(chatId);
     }
@@ -66,16 +41,11 @@ function App() {
     setHighlightedMessageId(null);
   };
 
-  const handlePanelResize = (newLeftWidth: number) => {
-    setLeftPanelWidth(newLeftWidth);
-  };
-
   const handleThemeToggle = () => {
     setTheme(theme === 'light' ? 'dark' : 'light');
   };
 
   const handleNewChat = () => {
-    // Create a new chat session
     const newChatId = `new-chat-${Date.now()}`;
     setCurrentChatId(newChatId);
     setHighlightedMessageId(null);
@@ -93,7 +63,41 @@ function App() {
     setIsSidebarOpen(!isSidebarOpen);
   };
 
-  const rightPanelWidth = containerWidth - leftPanelWidth - 1; // -1 for divider
+  const handleMouseDown = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+  };
+
+  const handleMouseMove = (e: MouseEvent) => {
+    if (!isDragging || !containerRef.current) return;
+
+    const rect = containerRef.current.getBoundingClientRect();
+    const newRatio = ((e.clientX - rect.left) / rect.width) * 100;
+    
+    // Constrain to reasonable bounds (20% - 80%)
+    const constrainedRatio = Math.max(20, Math.min(80, newRatio));
+    setLeftPanelRatio(constrainedRatio);
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+    document.body.style.cursor = '';
+    document.body.style.userSelect = '';
+  };
+
+  useEffect(() => {
+    if (isDragging) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+      
+      return () => {
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+      };
+    }
+  }, [isDragging]);
 
   return (
     <div 
@@ -103,11 +107,12 @@ function App() {
     >
       {/* Left Panel - Chat */}
       <div 
-        className="flex-shrink-0 border-r"
+        className={isCanvasVisible ? 'border-r' : 'flex-[2]'}
         style={{ 
-          width: isCanvasVisible ? leftPanelWidth : '100vw',
           borderColor: '#3a3835',
-          flex: isCanvasVisible ? undefined : 1
+          flexBasis: isCanvasVisible ? `${leftPanelRatio}%` : '100%',
+          flexGrow: isCanvasVisible ? 0 : 1,
+          flexShrink: 0
         }}
       >
         <ChatPanel 
@@ -124,30 +129,43 @@ function App() {
           onCanvasToggle={() => setIsCanvasVisible(v => !v)}
         />
       </div>
-      {/* Resizable Divider and CanvasPanel only if canvas is visible */}
+      
+      {/* Resizable Divider */}
       {isCanvasVisible && (
-        <>
-          <ResizableDivider
-            onResize={handlePanelResize}
-            initialLeftWidth={leftPanelWidth}
-            minLeftWidth={minLeftWidth}
-            minRightWidth={minRightWidth}
-            containerWidth={containerWidth}
-          />
-          <div 
-            className="flex-1 min-w-0"
-            style={{ width: rightPanelWidth }}
-          >
-            <CanvasPanel 
-              draggedText={draggedText}
-              sourceMsgId={sourceMsgId}
-              sourceChatId={sourceChatId}
-              theme={theme}
-              onTextDragComplete={handleTextDragComplete}
-              onBlockClick={handleBlockClick}
-            />
+        <div
+          className="w-1 cursor-col-resize flex items-center justify-center transition-colors duration-200 hover:bg-blue-400"
+          style={{ backgroundColor: isDragging ? '#3B82F6' : '#4B5563' }}
+          onMouseDown={handleMouseDown}
+        >
+          <div className="p-1 rounded hover:bg-white/20 transition-colors">
+            <div className="w-3 h-3 flex flex-col gap-0.5">
+              <div className="w-full h-0.5 bg-gray-300 rounded"></div>
+              <div className="w-full h-0.5 bg-gray-300 rounded"></div>
+              <div className="w-full h-0.5 bg-gray-300 rounded"></div>
+            </div>
           </div>
-        </>
+        </div>
+      )}
+      
+      {/* Right Panel - Canvas */}
+      {isCanvasVisible && (
+        <div 
+          className="min-w-0"
+          style={{ 
+            flexBasis: `${100 - leftPanelRatio}%`,
+            flexGrow: 0,
+            flexShrink: 0
+          }}
+        >
+          <CanvasPanel 
+            draggedText={draggedText}
+            sourceMsgId={sourceMsgId}
+            sourceChatId={sourceChatId}
+            theme={theme}
+            onTextDragComplete={handleTextDragComplete}
+            onBlockClick={handleBlockClick}
+          />
+        </div>
       )}
     </div>
   );

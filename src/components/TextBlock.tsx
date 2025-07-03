@@ -44,7 +44,7 @@ const TextBlock: React.FC<TextBlockProps> = ({
   const blockRef = useRef<HTMLDivElement>(null);
   const [isResizing, setIsResizing] = useState(false);
   const [resizeStart, setResizeStart] = useState({ x: 0, y: 0, width: 0, height: 0 });
-  const liveSize = useRef({ width, height });
+  const [resizeSize, setResizeSize] = useState<{ width: number; height: number }>({ width, height });
 
   const minWidth = 200;
   const maxWidth = 600;
@@ -60,6 +60,7 @@ const TextBlock: React.FC<TextBlockProps> = ({
       width: width,
       height: height
     });
+    setResizeSize({ width, height });
   };
 
   useEffect(() => {
@@ -69,11 +70,13 @@ const TextBlock: React.FC<TextBlockProps> = ({
       const deltaY = e.clientY - resizeStart.y;
       const newWidth = Math.max(minWidth, Math.min(maxWidth, resizeStart.width + deltaX));
       const newHeight = Math.max(minHeight, Math.min(maxHeight, resizeStart.height + deltaY));
-      liveSize.current.width = newWidth;
-      liveSize.current.height = newHeight;
+      setResizeSize({ width: newWidth, height: newHeight });
     };
     const handleMouseUp = () => {
-      setIsResizing(false);
+      if (isResizing) {
+        setIsResizing(false);
+        onResize(id, resizeSize.width, resizeSize.height);
+      }
     };
     if (isResizing) {
       document.addEventListener('mousemove', handleMouseMove);
@@ -83,7 +86,7 @@ const TextBlock: React.FC<TextBlockProps> = ({
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [isResizing, resizeStart]);
+  }, [isResizing, resizeStart, id, onResize, resizeSize]);
 
   return (
     <motion.div
@@ -97,8 +100,8 @@ const TextBlock: React.FC<TextBlockProps> = ({
       style={{
         x,
         y,
-        width: isResizing ? liveSize.current.width : width,
-        height: isResizing ? liveSize.current.height : height,
+        width: isResizing ? resizeSize.width : width,
+        height: isResizing ? resizeSize.height : height,
         borderLeftColor: color,
         borderLeftWidth: '4px',
         willChange: 'transform',
@@ -108,16 +111,31 @@ const TextBlock: React.FC<TextBlockProps> = ({
         color: '#ffffff',
         position: 'absolute',
       }}
-      drag
+      drag={!isResizing}
       dragMomentum={false}
       dragElastic={1}
       onDragEnd={(e, info) => {
-        onDrag(id, x + info.point.x - info.offset.x, y + info.point.y - info.offset.y);
+        if (!isResizing) {
+          onDrag(id, x + info.point.x - info.offset.x, y + info.point.y - info.offset.y);
+        }
       }}
       onClick={() => onClick(id)}
       whileDrag={{scale: 1.02}}
-
     >
+      {/* Resizing animation overlay */}
+      {isResizing && (
+        <motion.div
+          className="absolute inset-0 rounded-xl border-2 border-dashed border-blue-400 pointer-events-none z-40"
+          style={{
+            width: resizeSize.width,
+            height: resizeSize.height,
+            background: 'rgba(59, 130, 246, 0.08)',
+          }}
+          initial={{ opacity: 0.5 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+        />
+      )}
       <div className="text-sm leading-relaxed overflow-hidden h-full text-white">
         {text}
       </div>

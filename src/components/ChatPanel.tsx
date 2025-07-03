@@ -224,7 +224,7 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
       }));
       
       setIsTyping(false);
-    }, 1000 + Math.random() * 2000);
+    }, 100);
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
