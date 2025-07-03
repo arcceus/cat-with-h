@@ -226,7 +226,6 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
             {!isCollapsed && (
               <>
                 <span>New Chat</span>
-                <span className="ml-auto text-xs opacity-70">⌘⇧N</span>
               </>
             )}
           </Button>
@@ -255,7 +254,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
                     title={isCollapsed ? chat.title : undefined}
                   >
                     {/* Chat Icon */}
-                    <div
+                    {/* <div
                       className={cn(
                         "w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 relative",
                         currentChatId === chat.id
@@ -271,7 +270,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
                           </span>
                         </div>
                       )}
-                    </div>
+                    </div> */}
 
                     {/* Chat Info */}
                     {!isCollapsed && (
@@ -293,7 +292,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
                           </div>
                         </div>
                         
-                        <div className="text-sm text-gray-400 mt-1 truncate">
+                        <div className="text-sm text-gray-400 mt-1 truncate text-wrap">
                           {getLastMessage(chat)}
                         </div>
                         

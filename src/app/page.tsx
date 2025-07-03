@@ -11,11 +11,12 @@ function App() {
   const [sourceMsgId, setSourceMsgId] = useState<string | null>(null);
   const [sourceChatId, setSourceChatId] = useState<string | null>(null);
   const [highlightedMessageId, setHighlightedMessageId] = useState<string | null>(null);
-  const [containerWidth, setContainerWidth] = useState(window.innerWidth);
+  const [containerWidth, setContainerWidth] = useState(0);
   const [leftPanelWidth, setLeftPanelWidth] = useLocalStorage('leftPanelWidth', 500);
   const [currentChatId, setCurrentChatId] = useState('project-discussion');
   const [theme, setTheme] = useTheme();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isCanvasVisible, setIsCanvasVisible] = useState(true);
   
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -23,10 +24,10 @@ function App() {
   const minRightWidth = 450;
 
   useEffect(() => {
+    setContainerWidth(typeof window !== 'undefined' ? window.innerWidth : 0);
     const handleResize = () => {
       setContainerWidth(window.innerWidth);
     };
-
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
@@ -104,8 +105,9 @@ function App() {
       <div 
         className="flex-shrink-0 border-r"
         style={{ 
-          width: leftPanelWidth,
-          borderColor: '#3a3835'
+          width: isCanvasVisible ? leftPanelWidth : '100vw',
+          borderColor: '#3a3835',
+          flex: isCanvasVisible ? undefined : 1
         }}
       >
         <ChatPanel 
@@ -119,32 +121,34 @@ function App() {
           onChatSelect={handleChatSelect}
           isSidebarOpen={isSidebarOpen}
           onSidebarToggle={handleSidebarToggle}
+          onCanvasToggle={() => setIsCanvasVisible(v => !v)}
         />
       </div>
-      
-      {/* Resizable Divider */}
-      <ResizableDivider
-        onResize={handlePanelResize}
-        initialLeftWidth={leftPanelWidth}
-        minLeftWidth={minLeftWidth}
-        minRightWidth={minRightWidth}
-        containerWidth={containerWidth}
-      />
-      
-      {/* Right Panel - Canvas */}
-      <div 
-        className="flex-1 min-w-0"
-        style={{ width: rightPanelWidth }}
-      >
-        <CanvasPanel 
-          draggedText={draggedText}
-          sourceMsgId={sourceMsgId}
-          sourceChatId={sourceChatId}
-          theme={theme}
-          onTextDragComplete={handleTextDragComplete}
-          onBlockClick={handleBlockClick}
-        />
-      </div>
+      {/* Resizable Divider and CanvasPanel only if canvas is visible */}
+      {isCanvasVisible && (
+        <>
+          <ResizableDivider
+            onResize={handlePanelResize}
+            initialLeftWidth={leftPanelWidth}
+            minLeftWidth={minLeftWidth}
+            minRightWidth={minRightWidth}
+            containerWidth={containerWidth}
+          />
+          <div 
+            className="flex-1 min-w-0"
+            style={{ width: rightPanelWidth }}
+          >
+            <CanvasPanel 
+              draggedText={draggedText}
+              sourceMsgId={sourceMsgId}
+              sourceChatId={sourceChatId}
+              theme={theme}
+              onTextDragComplete={handleTextDragComplete}
+              onBlockClick={handleBlockClick}
+            />
+          </div>
+        </>
+      )}
     </div>
   );
 }

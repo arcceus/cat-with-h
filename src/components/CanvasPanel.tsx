@@ -5,7 +5,6 @@ import { Button } from '../components/ui/button';
 import { useDebounce } from '../hooks/useDebounce';
 import { useAnimationFrame } from '../hooks/useAnimationFrame';
 import TextBlock from './TextBlock';
-import ConnectionLine from './ConnectionLine';
 import CanvasMenu from './CanvasMenu';
 
 interface TextNode {
@@ -218,43 +217,28 @@ const CanvasPanel: React.FC<CanvasPanelProps> = ({
     return () => document.removeEventListener('wheel', handleWheel);
   }, []);
 
-  const handleBlockMouseDown = (e: React.MouseEvent, nodeId: string) => {
-    e.stopPropagation();
-    
-    if (connectingFrom && connectingFrom !== nodeId) {
-      // Complete connection
-      const fromNode = nodes.find(n => n.id === connectingFrom);
-      const toNode = nodes.find(n => n.id === nodeId);
-      
-      if (fromNode && toNode && connectionStart) {
-        const newConnection: Connection = {
-          id: Date.now().toString(),
-          from: connectingFrom,
-          to: nodeId,
-          fromPoint: connectionStart,
-          toPoint: { x: toNode.x + toNode.width / 2, y: toNode.y + toNode.height / 2 },
-          type: 'curved'
-        };
-        setConnections(prev => [...prev, newConnection]);
-      }
-      
-      setConnectingFrom(null);
-      setConnectionStart(null);
-    } else {
-      // Start dragging
-      setDraggingNode(nodeId);
-      setSelectedNode(nodeId);
-      
-      const node = nodes.find(n => n.id === nodeId);
-      if (node && canvasRef.current) {
-        const rect = canvasRef.current.getBoundingClientRect();
-        const x = (e.clientX - rect.left - pan.x) / zoom;
-        const y = (e.clientY - rect.top - pan.y) / zoom;
-        setDragOffset({
-          x: x - node.x,
-          y: y - node.y
-        });
-      }
+  const handleBlockDrag = (nodeId: string, newX: number, newY: number) => {
+    setNodes(prev => prev.map(node =>
+      node.id === nodeId ? { ...node, x: newX, y: newY } : node
+    ));
+    // Update connections in real-time
+    const node = nodes.find(n => n.id === nodeId);
+    if (node) {
+      setConnections(prev => prev.map(conn => {
+        if (conn.from === nodeId) {
+          return {
+            ...conn,
+            fromPoint: { x: newX + node.width / 2, y: newY + node.height / 2 }
+          };
+        }
+        if (conn.to === nodeId) {
+          return {
+            ...conn,
+            toPoint: { x: newX + node.width / 2, y: newY + node.height / 2 }
+          };
+        }
+        return conn;
+      }));
     }
   };
 
@@ -416,14 +400,11 @@ const CanvasPanel: React.FC<CanvasPanelProps> = ({
           <h2 className="text-xl font-semibold text-white">
             Canvas Workspace
           </h2>
-          <span className="text-sm text-gray-400">
-            ({nodes.length} blocks, {connections.length} connections)
-          </span>
         </div>
         
-        <div className="flex items-center gap-4">
+        <div className="flex items-center">
           {/* Zoom Controls */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center">
             <Button
               variant="ghost"
               size="icon"
@@ -488,17 +469,6 @@ const CanvasPanel: React.FC<CanvasPanelProps> = ({
                 />
               </marker>
             </defs>
-            {connections.map((connection) => (
-              <ConnectionLine
-                key={connection.id}
-                from={connection.fromPoint}
-                to={connection.toPoint}
-                type={connection.type}
-                label={connection.label}
-                theme={theme}
-                onDelete={() => handleDeleteConnection(connection.id)}
-              />
-            ))}
           </svg>
 
           {/* Text Blocks */}
@@ -517,10 +487,10 @@ const CanvasPanel: React.FC<CanvasPanelProps> = ({
               sourceMessageId={node.sourceMessageId}
               sourceChatId={node.sourceChatId}
               theme={theme}
-              onMouseDown={handleBlockMouseDown}
+              onDrag={handleBlockDrag}
               onDelete={handleDeleteNode}
               onClick={handleBlockClick}
-              onConnectionStart={handleConnectionStart}
+              // onConnectionStart={handleConnectionStart}
               onResize={handleBlockResize}
             />
           ))}

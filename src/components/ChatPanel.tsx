@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { Send, MessageSquare, Menu, Moon, Sun, Plus, Clock, X } from 'lucide-react';
+import { Send, MessageSquare, Menu, Moon, Sun, Plus, Clock, X, Layout } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { ScrollArea } from '../components/ui/scroll-area';
 import { cn } from '../lib/utils';
@@ -31,6 +31,7 @@ interface ChatPanelProps {
   onChatSelect?: (chatId: string) => void;
   isSidebarOpen: boolean;
   onSidebarToggle: () => void;
+  onCanvasToggle?: () => void;
 }
 
 const ChatPanel: React.FC<ChatPanelProps> = ({ 
@@ -43,7 +44,8 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
   onThemeToggle,
   onChatSelect,
   isSidebarOpen,
-  onSidebarToggle
+  onSidebarToggle,
+  onCanvasToggle
 }) => {
   const [chatSessions, setChatSessions] = useState<ChatSession[]>([
     {
@@ -322,13 +324,22 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
                 <Menu className="h-4 w-4" />
               </Button>
             )}
-            <MessageSquare className="w-6 h-6 text-blue-400" />
+            {/* <MessageSquare className="w-6 h-6 text-blue-400" /> */}
             <h1 className="text-xl font-semibold text-white truncate">
               {currentChat?.title || 'AI Chat'}
             </h1>
           </div>
           
           <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onCanvasToggle}
+              className="h-9 w-9 text-white hover:bg-white/10"
+              title="Toggle Canvas"
+            >
+              <Layout className="h-4 w-4" />
+            </Button>
             <Button
               variant="ghost"
               size="icon"
