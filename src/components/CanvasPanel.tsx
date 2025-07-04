@@ -481,14 +481,6 @@ const CanvasPanel: React.FC<CanvasPanelProps> = ({
             </div>
           </div>
         )}
-
-        {/* Connection Mode Indicator */}
-        {connectingFrom && (
-          <div className="absolute top-6 left-6 bg-blue-600 text-white px-4 py-2 rounded-lg shadow-lg">
-            <p className="text-sm font-medium">Connection Mode</p>
-            <p className="text-xs opacity-90">Click another block to create connection</p>
-          </div>
-        )}
       </div>
     </div>
   );

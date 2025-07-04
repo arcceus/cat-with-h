@@ -327,12 +327,12 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
           <div className="p-3 border-t text-xs text-gray-500" style={{ borderColor: '#3a3835' }}>
             <div className="space-y-1">
               <div className="flex justify-between">
-                <span>⌘B Toggle</span>
+                <span>CTRL + B Toggle</span>
                 <span>↑↓ Navigate</span>
               </div>
               <div className="flex justify-between">
-                <span>⌘F Search</span>
-                <span>⌘⇧N New</span>
+                <span>CTRL + F Search</span>
+                <span>CTRL + Shift + N New</span>
               </div>
             </div>
           </div>
