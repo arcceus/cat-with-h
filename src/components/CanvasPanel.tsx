@@ -59,7 +59,7 @@ const CanvasPanel: React.FC<CanvasPanelProps> = ({
   const [canvases, setCanvases] = useState<CanvasData[]>([
     {
       id: 'default-canvas',
-      title: 'Main Canvas',
+      title: 'Canvas 1',
       nodes: [],
       connections: [],
       createdAt: new Date(),
@@ -75,57 +75,114 @@ const CanvasPanel: React.FC<CanvasPanelProps> = ({
 
   // Canvas interaction state
   const [selectedNode, setSelectedNode] = useState<string | null>(null);
-  const [draggingNode, setDraggingNode] = useState<string | null>(null);
-  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [isPanning, setIsPanning] = useState(false);
   const [panStart, setPanStart] = useState({ x: 0, y: 0 });
   const [connectingFrom, setConnectingFrom] = useState<string | null>(null);
   const [connectionStart, setConnectionStart] = useState<{ x: number; y: number } | null>(null);
+  const [isSwitchingCanvas, setIsSwitchingCanvas] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
+  const [renderKey, setRenderKey] = useState(0);
   
   const canvasRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
- useAnimationFrame();
+  const currentCanvasDataRef = useRef<{ nodes: TextNode[]; connections: Connection[] }>({ nodes: [], connections: [] });
+  useAnimationFrame();
 
   const colors = [
     '#3B82F6', '#14B8A6', '#F97316', '#EF4444', '#8B5CF6', 
     '#06B6D4', '#84CC16', '#F59E0B', '#EC4899', '#6366F1'
   ];
 
-  // Update canvas data when nodes or connections change
-  const updateCanvasData = useCallback(() => {
-    setCanvases(prev => prev.map(canvas => {
-      if (canvas.id === currentCanvasId) {
-        return {
-          ...canvas,
-          nodes,
-          connections,
-          lastModified: new Date()
-        };
-      }
-      return canvas;
-    }));
+  // Save current canvas data
+  const saveCurrentCanvas = useCallback(() => {
+    if (currentCanvasId) {
+      // Update the ref with current data
+      currentCanvasDataRef.current = { nodes, connections };
+      
+      setCanvases(prev => prev.map(canvas => {
+        if (canvas.id === currentCanvasId) {
+          return {
+            ...canvas,
+            nodes,
+            connections,
+            lastModified: new Date()
+          };
+        }
+        return canvas;
+      }));
+    }
   }, [currentCanvasId, nodes, connections]);
 
-  // Debounced canvas update
-  const debouncedUpdate = useDebounce(updateCanvasData, 50);
-
+  // Update ref whenever nodes or connections change
   useEffect(() => {
-    debouncedUpdate();
-  }, [nodes, connections, debouncedUpdate]);
+    currentCanvasDataRef.current = { nodes, connections };
+    console.log('REF UPDATED - Nodes in ref:', nodes.map(n => ({ id: n.id, x: n.x, y: n.y })));
+  }, [nodes, connections]);
+
+  // Immediate canvas update (no debouncing to avoid race conditions)
+  useEffect(() => {
+    if (!isSwitchingCanvas && currentCanvasId) {
+      saveCurrentCanvas();
+    }
+  }, [nodes, connections, currentCanvasId, isSwitchingCanvas, saveCurrentCanvas]);
 
   // Switch canvas
   const handleCanvasSelect = (canvasId: string) => {
-    const canvas = canvases.find(c => c.id === canvasId);
-    if (canvas) {
-      setCurrentCanvasId(canvasId);
-      setNodes(canvas.nodes);
-      setConnections(canvas.connections);
-      setSelectedNode(null);
-      setConnectingFrom(null);
-      setConnectionStart(null);
+    setIsSwitchingCanvas(true);
+    
+    // Save current canvas data before switching
+    if (currentCanvasId && currentCanvasId !== canvasId) {
+      // Use the ref data to ensure we save the most current state
+      const currentData = currentCanvasDataRef.current;
+      console.log('SAVING - Current nodes positions:', currentData.nodes.map(n => ({ id: n.id, x: n.x, y: n.y })));
+      
+      setCanvases(prev => {
+        const updatedCanvases = prev.map(canvas => {
+          if (canvas.id === currentCanvasId) {
+            return {
+              ...canvas,
+              nodes: currentData.nodes,
+              connections: currentData.connections,
+              lastModified: new Date()
+            };
+          }
+          return canvas;
+        });
+        
+        // Find the target canvas from the updated array
+        const targetCanvas = updatedCanvases.find(c => c.id === canvasId);
+        if (targetCanvas) {
+          console.log('LOADING - Target canvas nodes positions:', targetCanvas.nodes.map(n => ({ id: n.id, x: n.x, y: n.y })));
+          // Update state with the target canvas data
+          setCurrentCanvasId(canvasId);
+          setNodes(targetCanvas.nodes);
+          setConnections(targetCanvas.connections);
+          setSelectedNode(null);
+          setConnectingFrom(null);
+          setConnectionStart(null);
+          setRenderKey(prev => prev + 1);
+        }
+        
+        return updatedCanvases;
+      });
+    } else {
+      // If we're not switching from another canvas, just load the target canvas
+      const canvas = canvases.find(c => c.id === canvasId);
+      if (canvas) {
+        setCurrentCanvasId(canvasId);
+        setNodes(canvas.nodes);
+        setConnections(canvas.connections);
+        setSelectedNode(null);
+        setConnectingFrom(null);
+        setConnectionStart(null);
+        setRenderKey(prev => prev + 1);
+      }
     }
+    
+    // Reset the flag after a short delay
+    setTimeout(() => setIsSwitchingCanvas(false), 100);
   };
 
   // Create new canvas
@@ -180,20 +237,20 @@ const CanvasPanel: React.FC<CanvasPanelProps> = ({
   // Handle dropped text from chat
   useEffect(() => {
     if (draggedText && canvasRef.current) {
-      // Use the parent of canvasRef as the viewport
+      // Calculate the current viewport center in canvas coordinates
       const viewport = canvasRef.current.parentElement;
       if (!viewport) return;
       const rect = viewport.getBoundingClientRect();
-      const centerX = (rect.width / 2 - pan.x) / zoom;
-      const centerY = (rect.height / 2 - pan.y) / zoom;
+      const viewportCenterX = (rect.width / 2 - pan.x + 2500) / zoom;
+      const viewportCenterY = (rect.height / 2 - pan.y + 2500) / zoom;
       
       const { width, height } = calculateInitialSize(draggedText);
       
       const newNode: TextNode = {
         id: Date.now().toString(),
         text: draggedText,
-        x: centerX - width / 2,
-        y: centerY - height / 2,
+        x: viewportCenterX - width / 2,  // Center the block at current viewport center
+        y: viewportCenterY - height / 2,
         width,
         height,
         sourceMessageId: sourceMsgId || undefined,
@@ -245,32 +302,15 @@ const CanvasPanel: React.FC<CanvasPanelProps> = ({
   };
 
   const handleMouseMove = useCallback((e: MouseEvent) => {
-    if (draggingNode && canvasRef.current) {
-      const rect = canvasRef.current.getBoundingClientRect();
-      const x = (e.clientX - rect.left - pan.x) / zoom;
-      const y = (e.clientY - rect.top - pan.y) / zoom;
-      
-      const newPosition = {
-        x: x - dragOffset.x,
-        y: y - dragOffset.y
-      };
-
-      // Immediate update for better performance
-      setNodes(prev => prev.map(node => 
-        node.id === draggingNode ? { ...node, ...newPosition } : node
-      ));
-    }
-    
     if (isPanning && canvasRef.current) {
       setPan({
         x: e.clientX - panStart.x,
         y: e.clientY - panStart.y
       });
     }
-  }, [draggingNode, dragOffset, isPanning, panStart, pan, zoom, nodes]);
+  }, [isPanning, panStart]);
 
   const handleMouseUp = useCallback(() => {
-    setDraggingNode(null);
     setIsPanning(false);
   }, []);
 
@@ -327,21 +367,22 @@ const CanvasPanel: React.FC<CanvasPanelProps> = ({
     connectionCount: canvas.connections.length
   }));
 
-  // Center the initial pan on the canvas
+  // Center the initial pan on the canvas (only once)
   useEffect(() => {
-    if (canvasRef.current) {
+    if (canvasRef.current && !isInitialized) {
       const container = canvasRef.current.parentElement;
       if (container) {
         const containerRect = container.getBoundingClientRect();
-        const canvasWidth = 5000;
-        const canvasHeight = 5000;
-        setPan({
-          x: (containerRect.width / 2) - (canvasWidth / 2),
-          y: (containerRect.height / 2) - (canvasHeight / 2)
-        });
+        // Center the canvas so that (0,0) is at the center of the viewport
+        const newPan = {
+          x: containerRect.width / 2,
+          y: containerRect.height / 2
+        };
+        setPan(newPan);
+        setIsInitialized(true);
       }
     }
-  }, []);
+  }, [isInitialized]);
 
   return (
     <div className="flex flex-col h-full" style={{ backgroundColor: '#272725' }}>
@@ -396,6 +437,8 @@ const CanvasPanel: React.FC<CanvasPanelProps> = ({
 
       {/* Canvas */}
       <div className="flex-1 relative overflow-hidden">
+
+
         <div
           ref={canvasRef}
           className="absolute top-0 left-0 cursor-move"
@@ -403,14 +446,14 @@ const CanvasPanel: React.FC<CanvasPanelProps> = ({
           style={{
             width: 5000,
             height: 5000,
-            transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
-            transformOrigin: '0 0',
+            transform: `translate(${pan.x - 2500}px, ${pan.y - 2500}px) scale(${zoom})`,
+            transformOrigin: 'center center',
             backgroundImage: `
               linear-gradient(to right, rgba(255,255,255,0.06) 1px, transparent 1px),
               linear-gradient(to bottom, rgba(255,255,255,0.06) 1px, transparent 1px)
             `,
             backgroundSize: '32px 32px',
-            backgroundPosition: '0 0',
+            backgroundPosition: 'center center',
           }}
         >
           {/* SVG for connections */}
@@ -436,28 +479,32 @@ const CanvasPanel: React.FC<CanvasPanelProps> = ({
             </defs>
           </svg> */}
 
+
+
           {/* Text Blocks */}
-          {nodes.map((node) => (
-            <TextBlock
-              key={node.id}
-              id={node.id}
-              text={node.text}
-              x={node.x}
-              y={node.y}
-              width={node.width}
-              height={node.height}
-              color={node.color}
-              isSelected={selectedNode === node.id}
-              isConnecting={connectingFrom === node.id}
-              sourceMessageId={node.sourceMessageId}
-              sourceChatId={node.sourceChatId}
-              theme={theme}
-              onDrag={handleBlockDrag}
-              onDelete={handleDeleteNode}
-              onClick={handleBlockClick}
-              onResize={handleBlockResize}
-            />
-          ))}
+          <div key={`canvas-nodes-${currentCanvasId}-${renderKey}`}>
+            {nodes.map((node) => (
+              <TextBlock
+                key={`${currentCanvasId}-${node.id}`}
+                id={node.id}
+                text={node.text}
+                x={node.x}
+                y={node.y}
+                width={node.width}
+                height={node.height}
+                color={node.color}
+                isSelected={selectedNode === node.id}
+                isConnecting={connectingFrom === node.id}
+                sourceMessageId={node.sourceMessageId}
+                sourceChatId={node.sourceChatId}
+                theme={theme}
+                onDrag={handleBlockDrag}
+                onDelete={handleDeleteNode}
+                onClick={handleBlockClick}
+                onResize={handleBlockResize}
+              />
+            ))}
+          </div>
         </div>
 
         {/* Instructions */}

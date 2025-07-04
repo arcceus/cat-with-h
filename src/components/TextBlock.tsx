@@ -116,7 +116,10 @@ const TextBlock: React.FC<TextBlockProps> = ({
       dragElastic={1}
       onDragEnd={(e, info) => {
         if (!isResizing) {
-          onDrag(id, x + info.point.x - info.offset.x, y + info.point.y - info.offset.y);
+          // Use the delta to calculate the new position
+          const newX = x + info.offset.x;
+          const newY = y + info.offset.y;
+          onDrag(id, newX, newY);
         }
       }}
       onClick={() => onClick(id)}
