@@ -28,6 +28,7 @@ interface ChatSidebarProps {
   onNewChat: () => void;
   onChatDelete?: (chatId: string) => void;
   onChatUpdate?: (chatId: string, updates: Partial<ChatSession>) => void;
+  onCollapsedChange?: (collapsed: boolean) => void;
 }
 
 const ChatSidebar: React.FC<ChatSidebarProps> = ({
@@ -38,7 +39,8 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
   onChatSelect,
   onNewChat,
   onChatDelete,
-  onChatUpdate
+  onChatUpdate,
+  onCollapsedChange
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -99,31 +101,6 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, currentChatId, sortedChats, onToggle, onNewChat, onChatSelect]);
 
-  const formatTimestamp = (date: Date) => {
-    const now = new Date();
-    const diff = now.getTime() - date.getTime();
-    const minutes = Math.floor(diff / (1000 * 60));
-    const hours = Math.floor(diff / (1000 * 60 * 60));
-    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-
-    if (minutes < 1) return 'now';
-    if (minutes < 60) return `${minutes}m`;
-    if (hours < 24) return `${hours}h`;
-    if (days < 7) return `${days}d`;
-    return date.toLocaleDateString();
-  };
-
-  const getLastMessage = (chat: ChatSession) => {
-    const lastMessage = chat.messages[chat.messages.length - 1];
-    if (!lastMessage) return 'No messages yet';
-    
-    const content = lastMessage.content;
-    const maxLength = isCollapsed ? 20 : 60;
-    return content.length > maxLength 
-      ? content.substring(0, maxLength) + '...'
-      : content;
-  };
-
   const handleChatSelect = (chatId: string) => {
     onChatSelect(chatId);
     // Clear unread count when selecting chat
@@ -142,7 +119,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
     }
   };
 
-  const sidebarWidth = isCollapsed ? 80 : 320;
+  const sidebarWidth = isCollapsed ? 80 : 270;
 
   return (
     <>
@@ -150,30 +127,40 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
       <div
         ref={sidebarRef}
         className={cn(
-          "fixed left-0 top-0 h-full z-50 transition-all duration-300 ease-in-out border-r flex flex-col",
+          "fixed left-0 top-0 h-full z-50 transition-all duration-300 ease-in-out flex flex-col bg-black/20 backdrop-blur-sm",
           isOpen ? "translate-x-0" : `-translate-x-full`
         )}
         style={{
-          width: sidebarWidth,
-          backgroundColor: '#1d1b18',
-          borderColor: '#3a3835'
+          width: sidebarWidth
         }}
       >
         {/* Header */}
-        <div className="p-4 border-b flex items-center justify-between" style={{ borderColor: '#3a3835' }}>
+        <div className="flex items-center justify-between px-4 py-3" >
           {!isCollapsed && (
-            <div className="flex items-center gap-2">
-              <MessageSquare className="h-5 w-5 text-blue-400" />
-              <h2 className="font-semibold text-white">Chats</h2>
-            </div>
+            <h1 className="text-white font-medium text-lg">Chatbot</h1>
           )}
           
-          <div className="flex items-center gap-1">
+          <div className="flex items-center">
+
             <Button
-              onClick={() => setIsCollapsed(!isCollapsed)}
+              onClick={onNewChat}
               variant="ghost"
               size="icon"
-              className="h-8 w-8 text-gray-400 hover:text-white hover:bg-white/10"
+              className="h-8 w-8 text-gray-400 hover:text-white hover:bg-white/10 rounded-full"
+              title="New Chat"
+            >
+              <Plus className="h-5 w-5" />
+            </Button>
+
+            <Button
+              onClick={() => {
+                const newCollapsed = !isCollapsed;
+                setIsCollapsed(newCollapsed);
+                onCollapsedChange?.(newCollapsed);
+              }}
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 text-gray-400 hover:text-white hover:bg-white/10 rounded-full"
               title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
             >
               {isCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
@@ -183,7 +170,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
               onClick={onToggle}
               variant="ghost"
               size="icon"
-              className="h-8 w-8 text-gray-400 hover:text-white hover:bg-white/10"
+              className="h-7 w-7 text-gray-400 hover:text-white hover:bg-white/10 rounded-full ml-1"
               title="Close sidebar (Ctrl+B)"
             >
               <X className="h-4 w-4" />
@@ -193,50 +180,32 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
 
         {/* Search Bar */}
         {!isCollapsed && (
-          <div className="p-4 border-b" style={{ borderColor: '#3a3835' }}>
+          <div className="px-3 pb-3">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
               <input
                 ref={searchInputRef}
                 type="text"
-                placeholder="Search conversations... (Ctrl+F)"
+                placeholder="Search conversations..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 rounded-lg text-sm text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                className="w-full pl-10 pr-4 py-2.5 rounded-lg text-sm text-white placeholder-gray-400 focus:outline-none focus:ring-gray-400 focus:border-transparent transition-all duration-200 hover:bg-white/5"
                 style={{
-                  backgroundColor: '#373432',
-                  border: '1px solid #3a3835'
+                  backgroundColor: '#373432'
                 }}
               />
             </div>
           </div>
         )}
 
-        {/* New Chat Button */}
-        <div className="p-4">
-          <Button
-            onClick={onNewChat}
-            className={cn(
-              "flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white transition-all duration-200",
-              isCollapsed ? "w-12 h-12 p-0 justify-center" : "w-full"
-            )}
-            title={isCollapsed ? "New Chat (Ctrl+Shift+N)" : undefined}
-          >
-            <Plus className="h-4 w-4" />
-            {!isCollapsed && (
-              <>
-                <span>New Chat</span>
-              </>
-            )}
-          </Button>
-        </div>
-
         {/* Chat List */}
-        <ScrollArea className="flex-1">
-          <div className="px-2 pb-4">
+        <ScrollArea className="flex-1 px-2">
+          <div className="pb-4">
             {sortedChats.length === 0 ? (
-              <div className="text-center py-8 text-gray-400">
-                {searchQuery ? 'No chats found' : 'No conversations yet'}
+              <div className="text-center py-12 text-gray-400 text-sm">
+                <MessageSquare className="h-8 w-8 mx-auto mb-3 text-gray-500" />
+                {searchQuery ? 'No conversations found' : 'No conversations yet'}
+                <p className="text-xs text-gray-500 mt-1">Start a new chat to begin</p>
               </div>
             ) : (
               <div className="space-y-1">
@@ -245,69 +214,37 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
                     key={chat.id}
                     onClick={() => handleChatSelect(chat.id)}
                     className={cn(
-                      "group relative flex items-start gap-3 p-3 rounded-lg cursor-pointer transition-all duration-200",
+                      "group relative flex items-center gap-3 px-3 py-1.5 rounded-lg cursor-pointer transition-all duration-200",
                       currentChatId === chat.id
-                        ? "bg-blue-600/20 border border-blue-500/30"
+                        ? "bg-white/10"
                         : "hover:bg-white/5",
                       isCollapsed && "justify-center"
                     )}
                     title={isCollapsed ? chat.title : undefined}
                   >
                     {/* Chat Icon */}
-                    {/* <div
-                      className={cn(
-                        "w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 relative",
-                        currentChatId === chat.id
-                          ? "bg-blue-600"
-                          : "bg-gray-600"
-                      )}
-                    >
-                      <MessageSquare className="h-5 w-5 text-white" />
-                      {chat.unreadCount && chat.unreadCount > 0 && (
-                        <div className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center">
-                          <span className="text-xs text-white font-medium">
-                            {chat.unreadCount > 9 ? '9+' : chat.unreadCount}
-                          </span>
-                        </div>
-                      )}
-                    </div> */}
-
+                    <div className={cn(
+                      "flex-shrink-0 w-2 h-2 rounded-full",
+                      currentChatId === chat.id ? "bg-blue-400" : "bg-gray-600"
+                    )} />
+                    
                     {/* Chat Info */}
                     {!isCollapsed && (
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between">
                           <h4 className={cn(
-                            "font-medium truncate",
-                            currentChatId === chat.id ? "text-blue-300" : "text-white"
+                            "font-normal truncate text-sm transition-colors",
+                            currentChatId === chat.id ? "text-white" : "text-gray-300"
                           )}>
                             {chat.title}
                           </h4>
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs text-gray-500">
-                              {formatTimestamp(chat.lastActivity)}
-                            </span>
-                            {currentChatId === chat.id && (
-                              <div className="w-2 h-2 bg-blue-400 rounded-full flex-shrink-0" />
-                            )}
-                          </div>
-                        </div>
-                        
-                        <div className="text-sm text-gray-400 mt-1 truncate text-wrap">
-                          {getLastMessage(chat)}
-                        </div>
-                        
-                        <div className="flex items-center justify-between mt-2">
-                          <div className="text-xs text-gray-500">
-                            {chat.messages.length} messages
-                          </div>
-                          
                           {/* Delete Button */}
                           {onChatDelete && chatSessions.length > 1 && (
                             <Button
                               onClick={(e) => handleDeleteChat(chat.id, e)}
                               variant="ghost"
                               size="icon"
-                              className="h-6 w-6 opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-400 hover:bg-red-400/10"
+                              className="h-6 w-6 opacity-0 group-hover:opacity-100 text-gray-500 hover:text-red-400 hover:bg-red-400/10 transition-all duration-200 rounded-full"
                             >
                               <X className="h-3 w-3" />
                             </Button>
@@ -323,26 +260,13 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
         </ScrollArea>
 
         {/* Footer with shortcuts */}
-        {!isCollapsed && (
-          <div className="p-3 border-t text-xs text-gray-500" style={{ borderColor: '#3a3835' }}>
-            <div className="space-y-1">
-              <div className="flex justify-between">
-                <span>CTRL + B Toggle</span>
-                <span>↑↓ Navigate</span>
-              </div>
-              <div className="flex justify-between">
-                <span>CTRL + F Search</span>
-                <span>CTRL + Shift + N New</span>
-              </div>
-            </div>
-          </div>
-        )}
+        
       </div>
 
       {/* Overlay for mobile */}
       {isOpen && (
         <div
-          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+          className="fixed inset-0 bg-black/60 z-40 lg:hidden backdrop-blur-sm"
           onClick={onToggle}
         />
       )}
@@ -351,11 +275,11 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
       {!isOpen && (
         <Button
           onClick={onToggle}
-          className="fixed top-4 left-4 z-40 bg-blue-600 hover:bg-blue-700 text-white shadow-lg"
+          className="fixed top-4 left-4 z-40 bg-blue-600 hover:bg-blue-700 text-white shadow-2xl rounded-full"
           size="icon"
           title="Open chat sidebar (Ctrl+B)"
         >
-          <MessageSquare className="h-4 w-4" />
+          <MessageSquare className="h-5 w-5" />
         </Button>
       )}
     </>

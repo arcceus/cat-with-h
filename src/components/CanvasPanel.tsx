@@ -385,58 +385,9 @@ const CanvasPanel: React.FC<CanvasPanelProps> = ({
   }, [isInitialized]);
 
   return (
-    <div className="flex flex-col h-full" style={{ backgroundColor: '#272725' }}>
-      {/* Toolbar */}
-      <div 
-        className="flex items-center justify-between px-6 py-4 border-b"
-        style={{ 
-          backgroundColor: '#272725',
-          borderColor: '#3a3835'
-        }}
-      >
-        <div className="flex items-center gap-3">
-          <h2 className="text-xl font-semibold text-white">
-            Canvas Workspace
-          </h2>
-        </div>
-        
-        <div className="flex items-center">
-          {/* Zoom Controls */}
-          <div className="flex items-center">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handleZoomOut}
-              className="h-9 w-9 text-white hover:bg-white/10"
-            >
-              <ZoomOut className="h-4 w-4" />
-            </Button>
-            <span className="text-sm min-w-[4rem] text-center text-gray-400">
-              {Math.round(zoom * 100)}%
-            </span>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handleZoomIn}
-              className="h-9 w-9 text-white hover:bg-white/10"
-            >
-              <ZoomIn className="h-4 w-4" />
-            </Button>
-          </div>
-
-          {/* Canvas Menu */}
-          <CanvasMenu
-            currentCanvasId={currentCanvasId}
-            canvases={canvasItems}
-            onCanvasSelect={handleCanvasSelect}
-            onNewCanvas={handleNewCanvas}
-            onCanvasDelete={handleCanvasDelete}
-          />
-        </div>
-      </div>
-
+    <div className="relative h-full" style={{ backgroundColor: '#272725' }}>
       {/* Canvas */}
-      <div className="flex-1 relative overflow-hidden">
+      <div className="absolute inset-0 overflow-hidden">
 
 
         <div
@@ -456,30 +407,6 @@ const CanvasPanel: React.FC<CanvasPanelProps> = ({
             backgroundPosition: 'center center',
           }}
         >
-          {/* SVG for connections */}
-          {/* <svg
-            ref={svgRef}
-            className="absolute inset-0 w-full h-full pointer-events-none"
-            style={{ zIndex: 10 }}
-          >
-            <defs>
-              <marker
-                id="arrowhead"
-                markerWidth="10"
-                markerHeight="7"
-                refX="9"
-                refY="3.5"
-                orient="auto"
-              >
-                <polygon
-                  points="0 0, 10 3.5, 0 7"
-                  fill="#9CA3AF"
-                />
-              </marker>
-            </defs>
-          </svg> */}
-
-
 
           {/* Text Blocks */}
           <div key={`canvas-nodes-${currentCanvasId}-${renderKey}`}>
@@ -528,6 +455,45 @@ const CanvasPanel: React.FC<CanvasPanelProps> = ({
             </div>
           </div>
         )}
+      </div>
+
+      {/* Floating Controls */}
+      <div className="absolute top-4 right-4 flex items-center gap-2 z-10">
+        {/* Zoom Controls */}
+        <div className="flex items-center bg-black/20 backdrop-blur-sm rounded-full p-1">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleZoomOut}
+            className="h-10 w-10 text-gray-400 hover:text-white hover:bg-white/10 rounded-full"
+            title="Zoom Out"
+          >
+            <ZoomOut className="h-5 w-5" />
+          </Button>
+          <span className="text-sm min-w-[4rem] text-center text-gray-400 mx-2">
+            {Math.round(zoom * 100)}%
+          </span>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleZoomIn}
+            className="h-10 w-10 text-gray-400 hover:text-white hover:bg-white/10 rounded-full"
+            title="Zoom In"
+          >
+            <ZoomIn className="h-5 w-5" />
+          </Button>
+        </div>
+
+        {/* Canvas Menu */}
+        <div className="bg-black/20 backdrop-blur-sm rounded-full">
+          <CanvasMenu
+            currentCanvasId={currentCanvasId}
+            canvases={canvasItems}
+            onCanvasSelect={handleCanvasSelect}
+            onNewCanvas={handleNewCanvas}
+            onCanvasDelete={handleCanvasDelete}
+          />
+        </div>
       </div>
     </div>
   );

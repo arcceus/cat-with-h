@@ -9,7 +9,7 @@ function App() {
   const [sourceMsgId, setSourceMsgId] = useState<string | null>(null);
   const [sourceChatId, setSourceChatId] = useState<string | null>(null);
   const [highlightedMessageId, setHighlightedMessageId] = useState<string | null>(null);
-  const [currentChatId, setCurrentChatId] = useState('project-discussion');
+  const [currentChatId, setCurrentChatId] = useState('default-chat');
   const [theme, setTheme] = useTheme();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isCanvasVisible, setIsCanvasVisible] = useState(true);

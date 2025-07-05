@@ -1,21 +1,20 @@
-import { useCallback, useRef } from 'react';
+import { useRef, useEffect } from 'react';
 
 export function useAnimationFrame() {
-  const frameRef = useRef<number>();
+  const frameRef = useRef<number | undefined>(undefined);
 
-  const requestFrame = useCallback((callback: () => void) => {
-    if (frameRef.current) {
-      cancelAnimationFrame(frameRef.current);
-    }
-    frameRef.current = requestAnimationFrame(callback);
+  useEffect(() => {
+    const animate = () => {
+      frameRef.current = requestAnimationFrame(animate);
+    };
+    
+    frameRef.current = requestAnimationFrame(animate);
+    
+    return () => {
+      if (frameRef.current) {
+        cancelAnimationFrame(frameRef.current);
+        frameRef.current = undefined;
+      }
+    };
   }, []);
-
-  const cancelFrame = useCallback(() => {
-    if (frameRef.current) {
-      cancelAnimationFrame(frameRef.current);
-      frameRef.current = undefined;
-    }
-  }, []);
-
-  return { requestFrame, cancelFrame };
 }
