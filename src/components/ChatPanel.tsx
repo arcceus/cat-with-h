@@ -367,7 +367,7 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
         <div 
           className="p-4"
         >
-          <div className="max-w-5xl mx-auto">
+          <div className="max-w-5xl mx-auto px-30">
             <form onSubmit={handleSubmit} className="flex gap-4 items-end">
               <div className="flex-1 relative">
                 <textarea
