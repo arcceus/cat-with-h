@@ -3,6 +3,10 @@ import { Trash2, Link, Move } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { cn } from '../lib/utils';
 import { motion } from 'framer-motion';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
 interface TextBlockProps {
   id: string;
@@ -140,7 +144,77 @@ const TextBlock: React.FC<TextBlockProps> = ({
         />
       )}
       <div className="text-sm leading-relaxed overflow-hidden h-full text-white">
-        {text}
+        <ReactMarkdown 
+          remarkPlugins={[remarkGfm]}
+          components={{
+            // Custom styling for markdown elements in text blocks
+            h1: ({ children }) => <h1 className="text-lg font-bold mb-2">{children}</h1>,
+            h2: ({ children }) => <h2 className="text-base font-semibold mb-2">{children}</h2>,
+            h3: ({ children }) => <h3 className="text-sm font-semibold mb-1">{children}</h3>,
+            p: (props) => {
+              // Remove margin if inside a list item
+              const node: any = props.node;
+              if (node?.parent?.type === 'listItem') {
+                return <p className="mb-0 leading-relaxed">{props.children}</p>;
+              }
+              // Add a small top margin for paragraphs after lists
+              return <p className="mt-1 mb-2 leading-relaxed">{props.children}</p>;
+            },
+            ul: ({ children }) => <ul className="list-disc list-inside mb-1">{children}</ul>,
+            ol: ({ children }) => <ol className="list-decimal list-inside mb-1" style={{ counterReset: 'list-counter' }}>{children}</ol>,
+            li: ({ children }) => <li className="ml-2 leading-relaxed" style={{ display: 'list-item' }}>{children}</li>,
+            code: ({ children, className, ...props }) => {
+              const isInline = !className;
+              if (isInline) {
+                return (
+                  <code
+                    style={{
+                      background: '#373432',
+                      color: '#cfcfcf',
+                      padding: '0.2em 0.7em',
+                      borderRadius: '9999px',
+                      fontSize: 'inherit',
+                      fontFamily: 'inherit',
+                    }}
+                  >
+                    {children}
+                  </code>
+                );
+              }
+              const match = /language-(\w+)/.exec(className || '');
+              const language = match ? match[1] : '';
+              return (
+                <div className="mb-3">
+                  <SyntaxHighlighter
+                    style={oneDark}
+                    language={language}
+                    PreTag="div"
+                    customStyle={{
+                      margin: 0,
+                      borderRadius: '4px',
+                      backgroundColor: '#373432',
+                      fontSize: '11px',
+                    }}
+                    codeTagProps={{
+                      style: { background: 'none' }
+                    }}
+                  >
+                    {String(children).replace(/\n$/, '')}
+                  </SyntaxHighlighter>
+                </div>
+              );
+            },
+            blockquote: ({ children }) => (
+              <blockquote className="border-l-2 border-gray-500 pl-2 italic mb-2 text-xs">{children}</blockquote>
+            ),
+            strong: ({ children }) => <strong className="font-bold">{children}</strong>,
+            em: ({ children }) => <em className="italic">{children}</em>,
+            // Handle text nodes to prevent unwanted line breaks
+            text: ({ children }) => <span>{children}</span>,
+          }}
+        >
+          {text}
+        </ReactMarkdown>
       </div>
       {(sourceMessageId || sourceChatId) && (
         <div className="text-xs flex items-center gap-1 text-gray-400">

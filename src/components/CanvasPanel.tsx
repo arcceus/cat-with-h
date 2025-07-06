@@ -458,7 +458,7 @@ const CanvasPanel: React.FC<CanvasPanelProps> = ({
       </div>
 
       {/* Floating Controls */}
-      <div className="absolute top-4 right-4 flex items-center gap-2 z-10">
+      <div className="fixed top-4 right-4 flex items-center gap-2 z-50 pointer-events-auto">
         {/* Zoom Controls */}
         <div className="flex items-center bg-black/20 backdrop-blur-sm rounded-full p-1">
           <Button

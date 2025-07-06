@@ -5,6 +5,12 @@ import { ScrollArea } from '../components/ui/scroll-area';
 import { cn } from '../lib/utils';
 import { useChat } from 'ai/react';
 import ChatSidebar from './ChatSidebar';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import { useRouter } from 'next/navigation';
+import { useChatSessions } from '../hooks/useChatSessions';
 
 interface Message {
   id: string;
@@ -35,17 +41,97 @@ interface ChatPanelProps {
   onCanvasToggle?: () => void;
 }
 
-// Simple markdown renderer for basic formatting
-const renderMarkdown = (text: string) => {
-  return text
-    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // Bold
-    .replace(/\*(.*?)\*/g, '<em>$1</em>') // Italic
-    .replace(/^### (.*$)/gim, '<h3 class="text-lg font-semibold mb-2">$1</h3>') // H3
-    .replace(/^## (.*$)/gim, '<h2 class="text-xl font-semibold mb-3">$1</h2>') // H2
-    .replace(/^# (.*$)/gim, '<h1 class="text-2xl font-bold mb-4">$1</h1>') // H1
-    .replace(/^- (.*$)/gim, '<li class="ml-4">$1</li>') // List items
-    .replace(/\n\n/g, '<br><br>') // Double line breaks
-    .replace(/\n/g, '<br>'); // Single line breaks
+// Markdown renderer component with text selection support
+const MarkdownRenderer: React.FC<{ content: string; messageId: string; onTextSelection: (messageId: string, selectedText: string) => void }> = ({ 
+  content, 
+  messageId, 
+  onTextSelection 
+}) => {
+  const handleMouseUp = () => {
+    const selection = window.getSelection();
+    if (selection && selection.toString().trim()) {
+      onTextSelection(messageId, selection.toString());
+    }
+  };
+
+  return (
+    <div 
+      className="text-base leading-relaxed cursor-text"
+      onMouseUp={handleMouseUp}
+      style={{ userSelect: 'text' }}
+    >
+      <ReactMarkdown 
+        remarkPlugins={[remarkGfm]}
+        components={{
+          // Custom styling for markdown elements
+          h1: ({ children }) => <h1 className="text-2xl font-bold mb-4">{children}</h1>,
+          h2: ({ children }) => <h2 className="text-xl font-semibold mb-3">{children}</h2>,
+          h3: ({ children }) => <h3 className="text-lg font-semibold mb-2">{children}</h3>,
+          p: (props) => {
+            // Remove margin if inside a list item
+            const node: any = props.node;
+            if (node?.parent?.type === 'listItem') {
+              return <p className="mb-0 leading-relaxed">{props.children}</p>;
+            }
+            // Add a small top margin for paragraphs after lists
+            return <p className="mt-1 mb-4 leading-relaxed">{props.children}</p>;
+          },
+          ul: ({ children }) => <ul className="list-disc list-inside mb-2">{children}</ul>,
+          ol: ({ children }) => <ol className="list-decimal list-inside mb-2" style={{ counterReset: 'list-counter' }}>{children}</ol>,
+          li: ({ children }) => <li className="ml-4 leading-relaxed" style={{ display: 'list-item' }}>{children}</li>,
+          code: ({ children, className, ...props }) => {
+            const isInline = !className;
+            if (isInline) {
+              return (
+                <code
+                  style={{
+                    background: '#393a36',
+                    color: '#9a9fa1',
+                    padding: '0.01em 0.5em 0.2rem',
+                    borderRadius: '9999px',
+                    fontSize: 'inherit',
+                    fontFamily: 'inherit',
+                  }}
+                >
+                  {children}
+                </code>
+              );
+            }
+            const match = /language-(\w+)/.exec(className || '');
+            const language = match ? match[1] : '';
+            return (
+              <div className="mb-6">
+                <SyntaxHighlighter
+                  style={oneDark}
+                  language={language}
+                  PreTag="div"
+                  customStyle={{
+                    margin: 0,
+                    borderRadius: '8px',
+                    backgroundColor: '#373432',
+                  }}
+                  codeTagProps={{
+                    style: { background: 'none' }
+                  }}
+                >
+                  {String(children).replace(/\n$/, '')}
+                </SyntaxHighlighter>
+              </div>
+            );
+          },
+          blockquote: ({ children }) => (
+            <blockquote className="border-l-4 border-gray-600 pl-4 italic mb-4">{children}</blockquote>
+          ),
+          strong: ({ children }) => <strong className="font-bold">{children}</strong>,
+          em: ({ children }) => <em className="italic">{children}</em>,
+          // Handle text nodes to prevent unwanted line breaks
+          text: ({ children }) => <span>{children}</span>,
+        }}
+      >
+        {content}
+      </ReactMarkdown>
+    </div>
+  );
 };
 
 
@@ -63,19 +149,38 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
   onSidebarToggle,
   onCanvasToggle
 }) => {
-  const [chatSessions, setChatSessions] = useState<ChatSession[]>([
-    {
-      id: 'default-chat',
-      title: 'New Chat',
-      messages: [],
-      lastActivity: new Date()
-    }
-  ]);
+  const router = useRouter();
+  const { 
+    chatSessions, 
+    isLoaded, 
+    addChatSession, 
+    updateChatSession, 
+    deleteChatSession, 
+    getChatSession,
+    ensureChatExists,
+    setChatSessions 
+  } = useChatSessions();
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messageRefs = useRef<Map<string, HTMLDivElement>>(new Map());
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const highlightCooldownRef = useRef<number>(0);
+
+  // Ensure current chat exists when component mounts
+  useEffect(() => {
+    if (isLoaded && currentChatId) {
+      ensureChatExists(currentChatId);
+    }
+  }, [isLoaded, currentChatId, ensureChatExists]);
+
+  // Auto-resize textarea
+  const resizeTextarea = useCallback(() => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+      textareaRef.current.style.height = Math.min(textareaRef.current.scrollHeight, 160) + 'px';
+    }
+  }, []);
 
   const currentChat = chatSessions?.find(chat => chat.id === currentChatId);
   const messages = currentChat?.messages || [];
@@ -101,18 +206,17 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
         timestamp: new Date()
       };
       
-      setChatSessions(prev => prev.map(chat => {
-        if (chat.id === currentChatId) {
-          return {
-            ...chat,
-            messages: [...chat.messages, aiMessage],
-            lastActivity: new Date()
-          };
-        }
-        return chat;
-      }));
+      updateChatSession(currentChatId, {
+        messages: [...(getChatSession(currentChatId)?.messages || []), aiMessage],
+        lastActivity: new Date()
+      });
     }
   });
+
+  // Resize textarea when input changes
+  useEffect(() => {
+    resizeTextarea();
+  }, [input, resizeTextarea]);
 
   // Reset useChat messages when switching chats
   useEffect(() => {
@@ -132,21 +236,18 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
         timestamp: new Date()
       };
       
-      setChatSessions(prev => prev.map(chat => {
-        if (chat.id === currentChatId) {
-          return {
-            ...chat,
-            messages: [...chat.messages, newUserMessage],
-            lastActivity: new Date()
-          };
-        }
-        return chat;
-      }));
+      updateChatSession(currentChatId, {
+        messages: [...(getChatSession(currentChatId)?.messages || []), newUserMessage],
+        lastActivity: new Date()
+      });
     }
-  }, [aiReactMessages, currentChatId, messages]);
+  }, [aiReactMessages, currentChatId, messages, updateChatSession, getChatSession]);
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    // Don't scroll to bottom if a message is highlighted
+    if (!highlightedMessageId) {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
   };
 
   const scrollToMessage = useCallback((messageId: string) => {
@@ -160,18 +261,31 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
   }, []);
 
   useEffect(() => {
-    scrollToBottom();
-  }, [messages, currentChatId, aiReactMessages]);
+    if (!highlightedMessageId) {
+      // Only scroll to bottom if enough time has passed since highlight was cleared
+      const now = Date.now();
+      if (now - highlightCooldownRef.current > 1000) {
+        scrollToBottom();
+      }
+    }
+  }, [messages, currentChatId, aiReactMessages, highlightedMessageId]);
 
   useEffect(() => {
     if (highlightedMessageId) {
-      scrollToMessage(highlightedMessageId);
-      
+      // Add a small delay to ensure the message is rendered
       const timer = setTimeout(() => {
+        scrollToMessage(highlightedMessageId);
+      }, 100);
+      
+      const clearTimer = setTimeout(() => {
         onHighlightComplete();
+        highlightCooldownRef.current = Date.now(); // Set cooldown timestamp
       }, 2000);
       
-      return () => clearTimeout(timer);
+      return () => {
+        clearTimeout(timer);
+        clearTimeout(clearTimer);
+      };
     }
   }, [highlightedMessageId, scrollToMessage, onHighlightComplete]);
 
@@ -212,46 +326,59 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
       lastActivity: new Date()
     };
     
-    setChatSessions(prev => [newChat, ...prev]);
-    onChatSelect?.(newChatId);
+    addChatSession(newChat);
+    router.push(`/chat/${newChatId}`);
   };
 
   const handleChatDelete = (chatId: string) => {
-    setChatSessions(prev => prev.filter(chat => chat.id !== chatId));
+    deleteChatSession(chatId);
     
     // If deleting current chat, switch to another one
     if (currentChatId === chatId) {
       const remainingChats = chatSessions.filter(chat => chat.id !== chatId);
       if (remainingChats.length > 0) {
-        onChatSelect?.(remainingChats[0].id);
+        router.push(`/chat/${remainingChats[0].id}`);
+      } else {
+        // If no chats left, create a new one
+        const newChatId = `new-chat-${Date.now()}`;
+        const newChat: ChatSession = {
+          id: newChatId,
+          title: 'New Chat',
+          messages: [],
+          lastActivity: new Date()
+        };
+        addChatSession(newChat);
+        router.push(`/chat/${newChatId}`);
       }
     }
   };
 
   const handleChatUpdate = (chatId: string, updates: Partial<ChatSession>) => {
-    setChatSessions(prev => prev.map(chat => 
-      chat.id === chatId ? { ...chat, ...updates } : chat
-    ));
+    updateChatSession(chatId, updates);
   };
 
-  // Ensure current chat exists
-  useEffect(() => {
-    if (!currentChat) {
-      const newChat: ChatSession = {
-        id: currentChatId,
-        title: currentChatId === 'default-chat' ? 'New Chat' : 'New Chat',
-        messages: [],
-        lastActivity: new Date()
-      };
-      setChatSessions(prev => [newChat, ...prev]);
-    }
-  }, [currentChatId, currentChat]);
+
 
   // Calculate the correct margin based on sidebar state
   const getSidebarMargin = () => {
     if (!isSidebarOpen) return '0px';
     return isSidebarCollapsed ? '80px' : '270px';
   };
+
+  // Show loading state while chat sessions are loading
+  if (!isLoaded) {
+    return (
+      <div className="flex flex-col h-full relative" style={{ backgroundColor: '#272725' }}>
+        <div className="flex items-center justify-center h-full">
+          <div className="flex gap-2">
+            <div className="w-3 h-3 bg-blue-400 rounded-full animate-bounce" />
+            <div className="w-3 h-3 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }} />
+            <div className="w-3 h-3 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }} />
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col h-full relative" style={{ backgroundColor: '#272725' }}>
@@ -324,14 +451,21 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
                     backgroundColor: message.type === 'user' ? '#373432' : 'transparent',
                     color: '#ffffff'
                   }}>
-                    <div 
-                      className="text-base leading-relaxed whitespace-pre-wrap cursor-text"
-                      onMouseUp={() => handleMouseUp(message.id)}
-                      style={{ userSelect: 'text' }}
-                      dangerouslySetInnerHTML={{ 
-                        __html: message.type === 'ai' ? renderMarkdown(message.content) : message.content 
-                      }}
-                    />
+                    {message.type === 'ai' ? (
+                      <MarkdownRenderer 
+                        content={message.content}
+                        messageId={message.id}
+                        onTextSelection={handleTextSelection}
+                      />
+                    ) : (
+                      <div 
+                        className="text-base leading-relaxed whitespace-pre-wrap cursor-text"
+                        onMouseUp={() => handleMouseUp(message.id)}
+                        style={{ userSelect: 'text' }}
+                      >
+                        {message.content}
+                      </div>
+                    )}
                     <div className="text-xs mt-3 opacity-70 text-gray-300">
                       {message.timestamp.toLocaleTimeString([], { 
                         hour: '2-digit', 
@@ -367,7 +501,7 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
         <div 
           className="p-4"
         >
-          <div className="max-w-5xl mx-auto px-30">
+          <div className="max-w-5xl mx-auto px-20">
             <form onSubmit={handleSubmit} className="flex gap-4 items-end">
               <div className="flex-1 relative">
                 <textarea
@@ -375,18 +509,13 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
                   value={input}
                   onChange={handleInputChange}
                   onKeyPress={handleKeyPress}
-                  placeholder="Ask me anything..."
+                  placeholder="Ask anything"
                   className="w-full resize-none rounded-3xl border px-6 py-4 pr-16 text-base focus:outline-none focus:ring-0 focus:border-transparent transition-all duration-200 min-h-[56px] max-h-40 text-white"
                   style={{
                     backgroundColor: '#373432',
                     borderColor: '#3a3835'
                   }}
                   rows={1}
-                  onInput={(e) => {
-                    const target = e.target as HTMLTextAreaElement;
-                    target.style.height = 'auto';
-                    target.style.height = Math.min(target.scrollHeight, 160) + 'px';
-                  }}
                 />
                 <Button
                   type="submit"

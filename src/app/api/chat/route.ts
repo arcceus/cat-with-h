@@ -8,7 +8,7 @@ export async function POST(req: Request) {
     const result = await streamText({
       model: google('gemini-2.0-flash'),
       messages,
-      maxTokens: 1000,
+      maxTokens: 500,
     });
 
     return result.toDataStreamResponse();

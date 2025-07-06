@@ -3,6 +3,7 @@ import { Search, Plus, MessageSquare, Clock, X, ChevronLeft, ChevronRight } from
 import { Button } from '../components/ui/button';
 import { ScrollArea } from '../components/ui/scroll-area';
 import { cn } from '../lib/utils';
+import { useRouter } from 'next/navigation';
 
 interface Message {
   id: string;
@@ -42,6 +43,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
   onChatUpdate,
   onCollapsedChange
 }) => {
+  const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
   const [isCollapsed, setIsCollapsed] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -91,7 +93,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
             : Math.min(sortedChats.length - 1, currentIndex + 1);
           
           if (sortedChats[nextIndex]) {
-            onChatSelect(sortedChats[nextIndex].id);
+            router.push(`/chat/${sortedChats[nextIndex].id}`);
           }
         }
       }
@@ -102,7 +104,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
   }, [isOpen, currentChatId, sortedChats, onToggle, onNewChat, onChatSelect]);
 
   const handleChatSelect = (chatId: string) => {
-    onChatSelect(chatId);
+    router.push(`/chat/${chatId}`);
     // Clear unread count when selecting chat
     if (onChatUpdate) {
       const chat = chatSessions.find(c => c.id === chatId);
@@ -127,11 +129,12 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
       <div
         ref={sidebarRef}
         className={cn(
-          "fixed left-0 top-0 h-full z-50 transition-all duration-300 ease-in-out flex flex-col bg-black/20 backdrop-blur-sm",
+          "fixed left-0 top-0 h-full z-50 transition-all duration-300 ease-in-out flex flex-col",
           isOpen ? "translate-x-0" : `-translate-x-full`
         )}
         style={{
-          width: sidebarWidth
+          width: sidebarWidth,
+          backgroundColor: '#1d1b18'
         }}
       >
         {/* Header */}
