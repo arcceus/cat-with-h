@@ -27,6 +27,11 @@ interface ChatSession {
   unreadCount?: number;
 }
 
+interface ChatTurn {
+  user: Message;
+  ai?: Message;
+}
+
 interface ChatPanelProps {
   theme: 'light' | 'dark';
   currentChatId: string;
@@ -134,8 +139,6 @@ const MarkdownRenderer: React.FC<{ content: string; messageId: string; onTextSel
   );
 };
 
-
-
 const ChatPanel: React.FC<ChatPanelProps> = ({ 
   theme,
   currentChatId,
@@ -161,7 +164,6 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
     setChatSessions 
   } = useChatSessions();
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
-
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messageRefs = useRef<Map<string, HTMLDivElement>>(new Map());
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -183,32 +185,50 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
   }, []);
 
   const currentChat = chatSessions?.find(chat => chat.id === currentChatId);
-  const messages = currentChat?.messages || [];
+  const [turns, setTurns] = useState<ChatTurn[]>(() => {
+    if (!currentChat?.messages) return [];
+    const result: ChatTurn[] = [];
+    let i = 0;
+    while (i < currentChat.messages.length) {
+      if (currentChat.messages[i].type === 'user') {
+        const userMsg = currentChat.messages[i];
+        let aiMsg: Message | undefined = undefined;
+        if (currentChat.messages[i + 1] && currentChat.messages[i + 1].type === 'ai') {
+          aiMsg = currentChat.messages[i + 1];
+          i++;
+        }
+        result.push({ user: userMsg, ai: aiMsg });
+      }
+      i++;
+    }
+    return result;
+  });
 
-  // Convert chat messages to ai/react format
-  const aiMessages = messages.map(msg => ({
-    id: msg.id,
-    role: msg.type === 'user' ? 'user' as const : 'assistant' as const,
-    content: msg.content
-  }));
-
-  // Use the useChat hook with a key to reset when chat changes
-  const { input, handleInputChange, handleSubmit, isLoading, messages: aiReactMessages, setMessages } = useChat({
+  // Use the useChat hook
+  const { input, handleInputChange, handleSubmit: useChatHandleSubmit, isLoading, setMessages } = useChat({
     api: '/api/chat',
-    initialMessages: aiMessages,
-    id: currentChatId, // This ensures the hook resets when chat changes
+    initialMessages: [], // We'll manage turns ourselves
+    id: currentChatId,
     onFinish: (message) => {
-      // Add the AI response to our chat sessions
-      const aiMessage: Message = {
-        id: message.id,
-        type: 'ai',
-        content: message.content,
-        timestamp: new Date()
-      };
-      
-      updateChatSession(currentChatId, {
-        messages: [...(getChatSession(currentChatId)?.messages || []), aiMessage],
-        lastActivity: new Date()
+      // Add AI message to the last turn
+      setTurns(prev => {
+        if (prev.length === 0) return prev;
+        const lastTurn = prev[prev.length - 1];
+        if (lastTurn.ai) return prev; // already has ai
+        const aiMessage: Message = {
+          id: message.id,
+          type: 'ai',
+          content: message.content,
+          timestamp: new Date()
+        };
+        const updatedTurns = [...prev];
+        updatedTurns[updatedTurns.length - 1] = { ...lastTurn, ai: aiMessage };
+        // Also update chat session
+        updateChatSession(currentChatId, {
+          messages: updatedTurns.flatMap(turn => [turn.user, ...(turn.ai ? [turn.ai] : [])]),
+          lastActivity: new Date()
+        });
+        return updatedTurns;
       });
     }
   });
@@ -220,28 +240,8 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
 
   // Reset useChat messages when switching chats
   useEffect(() => {
-    setMessages(aiMessages);
-  }, [currentChatId, aiMessages, setMessages]);
-
-  // Update chat sessions when user messages are added
-  useEffect(() => {
-    const userMessages = aiReactMessages.filter(msg => msg.role === 'user');
-    const lastUserMessage = userMessages[userMessages.length - 1];
-    
-    if (lastUserMessage && !messages.find(msg => msg.id === lastUserMessage.id)) {
-      const newUserMessage: Message = {
-        id: lastUserMessage.id,
-        type: 'user',
-        content: lastUserMessage.content,
-        timestamp: new Date()
-      };
-      
-      updateChatSession(currentChatId, {
-        messages: [...(getChatSession(currentChatId)?.messages || []), newUserMessage],
-        lastActivity: new Date()
-      });
-    }
-  }, [aiReactMessages, currentChatId, messages, updateChatSession, getChatSession]);
+    setMessages([]);
+  }, [currentChatId, setMessages]);
 
   const scrollToBottom = () => {
     // Don't scroll to bottom if a message is highlighted
@@ -268,7 +268,7 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
         scrollToBottom();
       }
     }
-  }, [messages, currentChatId, aiReactMessages, highlightedMessageId]);
+  }, [turns, currentChatId, isLoading, highlightedMessageId]);
 
   useEffect(() => {
     if (highlightedMessageId) {
@@ -357,13 +357,36 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
     updateChatSession(chatId, updates);
   };
 
-
-
   // Calculate the correct margin based on sidebar state
   const getSidebarMargin = () => {
     if (!isSidebarOpen) return '0px';
     return isSidebarCollapsed ? '80px' : '270px';
   };
+
+  // Handle user submit
+  const handleSubmit = useCallback((e: React.FormEvent) => {
+    e.preventDefault();
+    if (!input.trim()) return;
+    const userMessage: Message = {
+      id: `${Date.now()}-user`,
+      type: 'user',
+      content: input,
+      timestamp: new Date()
+    };
+    setTurns(prev => {
+      const updatedTurns = [...prev, { user: userMessage }];
+      // Also update chat session
+      updateChatSession(currentChatId, {
+        messages: updatedTurns.flatMap(turn => [turn.user, ...(turn.ai ? [turn.ai] : [])]),
+        lastActivity: new Date()
+      });
+      return updatedTurns;
+    });
+    handleInputChange({ target: { value: '' } } as any);
+    (async () => {
+      await useChatHandleSubmit(e as any);
+    })();
+  }, [input, currentChatId, updateChatSession, handleInputChange, useChatHandleSubmit]);
 
   // Show loading state while chat sessions are loading
   if (!isLoaded) {
@@ -427,56 +450,72 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
         {/* Messages Area */}
         <ScrollArea className="flex-1">
           <div className="px-8 py-4 space-y-8 max-w-5xl mx-auto">
-            {messages.map((message) => (
-              <div
-                key={message.id}
-                ref={(el) => setMessageRef(message.id, el)}
-                className={cn(
-                  "group relative",
-                  highlightedMessageId === message.id && "animate-pulse"
-                )}
-              >
-                <div className={cn(
-                  "flex gap-6",
-                  message.type === 'user' ? "justify-end" : "justify-start"
-                )}>
-                  <div className={cn(
-                    "max-w-[90%] rounded-3xl px-6 py-4 transition-all duration-300",
-                    message.type === 'user'
-                      ? "ml-16"
-                      : "mr-16",
-                    highlightedMessageId === message.id && "ring-2 ring-blue-400 ring-offset-2"
+            {turns.map((turn, idx) => (
+              <React.Fragment key={turn.user.id + (turn.ai?.id || '')}>
+                <div
+                  ref={el => setMessageRef(turn.user.id, el)}
+                  className={cn(
+                    'group relative',
+                    highlightedMessageId === turn.user.id && 'animate-pulse'
                   )}
-                  style={{
-                    backgroundColor: message.type === 'user' ? '#373432' : 'transparent',
-                    color: '#ffffff'
-                  }}>
-                    {message.type === 'ai' ? (
-                      <MarkdownRenderer 
-                        content={message.content}
-                        messageId={message.id}
-                        onTextSelection={handleTextSelection}
-                      />
-                    ) : (
-                      <div 
+                >
+                  <div className={cn('flex gap-6 justify-end')}>
+                    <div
+                      className={cn(
+                        'max-w-[90%] rounded-3xl px-6 py-4 transition-all duration-300 ml-16',
+                        highlightedMessageId === turn.user.id && 'ring-2 ring-blue-400 ring-offset-2'
+                      )}
+                      style={{ backgroundColor: '#373432', color: '#ffffff' }}
+                    >
+                      <div
                         className="text-base leading-relaxed whitespace-pre-wrap cursor-text"
-                        onMouseUp={() => handleMouseUp(message.id)}
+                        onMouseUp={() => handleMouseUp(turn.user.id)}
                         style={{ userSelect: 'text' }}
                       >
-                        {message.content}
+                        {turn.user.content}
                       </div>
-                    )}
-                    <div className="text-xs mt-3 opacity-70 text-gray-300">
-                      {message.timestamp.toLocaleTimeString([], { 
-                        hour: '2-digit', 
-                        minute: '2-digit' 
-                      })}
+                      <div className="text-xs mt-3 opacity-70 text-gray-300">
+                        {turn.user.timestamp.toLocaleTimeString([], {
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
+                {turn.ai && (
+                  <div
+                    ref={el => setMessageRef(turn.ai!.id, el)}
+                    className={cn(
+                      'group relative',
+                      highlightedMessageId === turn.ai!.id && 'animate-pulse'
+                    )}
+                  >
+                    <div className={cn('flex gap-6 justify-start')}>
+                      <div
+                        className={cn(
+                          'max-w-[90%] rounded-3xl px-6 py-4 transition-all duration-300 mr-16',
+                          highlightedMessageId === turn.ai!.id && 'ring-2 ring-blue-400 ring-offset-2'
+                        )}
+                        style={{ backgroundColor: 'transparent', color: '#ffffff' }}
+                      >
+                        <MarkdownRenderer
+                          content={turn.ai.content}
+                          messageId={turn.ai.id}
+                          onTextSelection={handleTextSelection}
+                        />
+                        <div className="text-xs mt-3 opacity-70 text-gray-300">
+                          {turn.ai.timestamp.toLocaleTimeString([], {
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </React.Fragment>
             ))}
-            
             {isLoading && (
               <div className="flex justify-start">
                 <div className="rounded-3xl px-6 py-4 mr-16" style={{ backgroundColor: 'transparent' }}>
@@ -486,9 +525,7 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
                       <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }} />
                       <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }} />
                     </div>
-                    <span className="text-sm text-gray-400">
-                      hmmm...
-                    </span>
+                    <span className="text-sm text-gray-400">hmmm...</span>
                   </div>
                 </div>
               </div>
