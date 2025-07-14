@@ -1,7 +1,4 @@
 "use client";
-import { Tldraw } from "@tldraw/tldraw";
-import "@tldraw/tldraw/tldraw.css";
-import { PanelGroup, Panel, PanelResizeHandle } from "react-resizable-panels";
 import { AppSidebar } from "@/components/app-sidebar";
 import { Separator } from "@/components/ui/separator"
 import {
@@ -10,6 +7,12 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar"
 import { ThemeToggle } from "@/components/ui/theme-toggle"
+import {
+  ResizablePanelGroup,
+  ResizablePanel,
+  ResizableHandle,
+} from "@/components/ui/resizable";
+import Canvas from "../canvas/page";
 
 export default function Workspace() {
   return (
@@ -28,8 +31,8 @@ export default function Workspace() {
           />
           <ThemeToggle />
         </header>
-        <PanelGroup direction="horizontal" style={{ height: "100%", width: "100%" }}>
-          <Panel defaultSize={50} minSize={15} maxSize={70}>
+        <ResizablePanelGroup direction="horizontal" className="h-full w-full">
+          <ResizablePanel defaultSize={50} minSize={15} maxSize={70}>
             <div className="flex flex-1 flex-col gap-4 p-4 pt-0 h-full">
               <div className="grid auto-rows-min gap-4 md:grid-cols-3">
                 <div className="bg-muted/50 aspect-video rounded-xl" />
@@ -38,16 +41,16 @@ export default function Workspace() {
               </div>
               <div className="bg-muted/50 min-h-[100vh] flex-1 rounded-xl md:min-h-min" />
             </div>
-          </Panel>
-          <PanelResizeHandle style={{ width: 4, background: "#444", cursor: "col-resize" }} />
-          <Panel defaultSize={50} minSize={30}>
+          </ResizablePanel>
+          <ResizableHandle />
+          <ResizablePanel defaultSize={50} minSize={30}>
             <div className="h-full w-full p-4 pt-0">
               <div className="h-full w-full rounded-xl overflow-hidden">
-                <Tldraw />
+                <Canvas />
               </div>
             </div>
-          </Panel>
-        </PanelGroup>
+          </ResizablePanel>
+        </ResizablePanelGroup>
       </SidebarInset>
     </SidebarProvider>
   );
