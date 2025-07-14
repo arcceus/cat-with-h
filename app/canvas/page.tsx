@@ -15,21 +15,30 @@ import {
   Edge,
   NodeMouseHandler,
   NodeTypes,
+  useNodesState,
+  useEdgesState,
+  ReactFlowProvider,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { useTheme } from 'next-themes';
 // import ContextMenu from './ContextMenu';
-import CustomNode from './CustomNode';
+import CustomNode from './customNode';
+import CustomEdge from './CustomEdge';
+import React from 'react';
 
 const nodeTypes: NodeTypes = {
   custom: CustomNode,
+};
+
+const edgeTypes = {
+  default: CustomEdge,
 };
 
 const initialNodes: Node[] = [
   { id: 'n1', type: 'custom', position: { x: 0, y: 0 }, data: { label: 'Node 1' } },
   { id: 'n2', type: 'custom', position: { x: 0, y: 100 }, data: { label: 'Node 2' } },
 ];
-const initialEdges: Edge[] = [{ id: 'n1-n2', source: 'n1', target: 'n2' }];
+const initialEdges: Edge[] = [{ id: 'n1-n2', source: 'n1', target: 'n2', type: 'default' }];
 
 type MenuState = {
   id: string;
@@ -38,25 +47,25 @@ type MenuState = {
 } | null;
 
 export default function Canvas() {
-  const [nodes, setNodes] = useState<Node[]>(initialNodes);
-  const [edges, setEdges] = useState<Edge[]>(initialEdges);
+  return (
+    <ReactFlowProvider>
+      <CanvasInner />
+    </ReactFlowProvider>
+  );
+}
+
+function CanvasInner() {
+  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
+  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
   const [menu, setMenu] = useState<MenuState>(null);
   const ref = useRef<HTMLDivElement>(null);
   const { theme } = useTheme();
 
   const colorMode = theme === "dark" ? "dark" : "light";
 
-  const onNodesChange = useCallback(
-    (changes: NodeChange[]) => setNodes((nodesSnapshot) => applyNodeChanges(changes, nodesSnapshot)),
-    [],
-  );
-  const onEdgesChange = useCallback(
-    (changes: EdgeChange[]) => setEdges((edgesSnapshot) => applyEdgeChanges(changes, edgesSnapshot)),
-    [],
-  );
   const onConnect = useCallback(
     (params: Edge | Connection) => setEdges((edgesSnapshot) => addEdge(params, edgesSnapshot)),
-    [],
+    [setEdges],
   );
 
   const onNodeContextMenu: NodeMouseHandler = useCallback(
@@ -76,8 +85,10 @@ export default function Canvas() {
   const onPaneClick = useCallback(() => setMenu(null), [setMenu]);
 
   return (
-    <div ref={ref} style={{ width: '100vw', height: '100vh' }}>
+    // <div style={{ width: '100vw', height: '100vh' }}>
+    <div style={{ width: '100vw', height: '100vh' }}>
       <ReactFlow
+        ref={ref}
         nodes={nodes}
         edges={edges}
         onNodesChange={onNodesChange}
@@ -88,6 +99,7 @@ export default function Canvas() {
         onPaneClick={onPaneClick}
         fitView
         nodeTypes={nodeTypes}
+        edgeTypes={edgeTypes}
       >
         <MiniMap />
         <Controls />
