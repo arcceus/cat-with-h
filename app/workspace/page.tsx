@@ -15,6 +15,7 @@ import Canvas from "../canvas/page";
 import { useChatStore } from "@/app/store/chatStore";
 import { Plus } from "lucide-react";
 import { useSidebar } from "@/components/ui/sidebar";
+import ChatPage from "../chat/page";
 
 function FloatingControls({ handleNewChat }: { handleNewChat: () => void }) {
   const { state } = useSidebar();
@@ -53,19 +54,17 @@ export default function Workspace() {
       style={{
         "--sidebar-width": "16rem",
       } as React.CSSProperties}
+      className="h-screen"
     >
       <FloatingControls handleNewChat={handleNewChat} />
       <AppSidebar />
       <SidebarInset>
         <ResizablePanelGroup direction="horizontal" className="h-full w-full">
-          <ResizablePanel defaultSize={50} minSize={15} maxSize={70}>
-            <div className="flex flex-1 flex-col gap-4 p-4 pt-4 h-full">
-              <div className="grid auto-rows-min gap-4 md:grid-cols-3">
-                <div className="bg-muted/50 aspect-video rounded-xl" />
-                <div className="bg-muted/50 aspect-video rounded-xl" />
-                <div className="bg-muted/50 aspect-video rounded-xl" />
+          <ResizablePanel defaultSize={60} minSize={15} maxSize={70}>
+            <div className="h-full w-full">
+              <div className="h-full w-full rounded-xl overflow-hidden">
+                <ChatPage/>
               </div>
-              <div className="bg-muted/50 min-h-[100vh] flex-1 rounded-xl md:min-h-min" />
             </div>
           </ResizablePanel>
           <ResizableHandle />

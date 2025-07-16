@@ -1,6 +1,13 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import type { Chat } from "@/app/types";
+import type { Message } from "@/app/types";
+
+interface Chat {
+  chatId: string;
+  messages: Message[];
+  updatedAt: string;
+  title: string;
+}
 
 interface ChatState {
   chats: Chat[];
@@ -14,7 +21,7 @@ interface ChatState {
   pinChat: (chatId: string) => void;
   unpinChat: (chatId: string) => void;
   setSearch: (search: string) => void;
-  updateChatMessages: (chatId: string, messages: any[]) => void;
+  updateChatMessages: (chatId: string, messages: Message[]) => void;
 }
 
 export const useChatStore = create<ChatState>()(
@@ -24,35 +31,54 @@ export const useChatStore = create<ChatState>()(
       activeChatId: null,
       pinned: {},
       search: '',
-      addChat: (chat) => set((state) => ({ chats: [chat, ...state.chats], activeChatId: chat.chatId })),
-      setActiveChat: (chatId) => set({ activeChatId: chatId }),
-      deleteChat: (chatId) => set((state) => {
+      addChat: (chat: Chat) => set((state) => {
+        const newChats = [chat, ...state.chats];
+        console.log('[addChat] chats:', newChats);
+        return { chats: newChats, activeChatId: chat.chatId };
+      }),
+      setActiveChat: (chatId: string) => {
+        console.log('[setActiveChat] chatId:', chatId);
+        set({ activeChatId: chatId });
+      },
+      deleteChat: (chatId: string) => set((state) => {
         const filtered = state.chats.filter((chat) => chat.chatId !== chatId);
         const isActiveDeleted = state.activeChatId === chatId;
         // Remove from pinned if present
         const { [chatId]: _, ...restPinned } = state.pinned;
+        console.log('[deleteChat] chats:', filtered);
         return {
           chats: filtered,
           activeChatId: isActiveDeleted ? null : state.activeChatId,
           pinned: restPinned,
         };
       }),
-      renameChat: (chatId, newTitle) => set((state) => ({
-        chats: state.chats.map((chat) =>
+      renameChat: (chatId: string, newTitle: string) => set((state) => {
+        const renamed = state.chats.map((chat) =>
           chat.chatId === chatId ? { ...chat, title: newTitle } : chat
-        ),
-      })),
-      pinChat: (chatId) => set((state) => ({ pinned: { ...state.pinned, [chatId]: true } })),
-      unpinChat: (chatId) => set((state) => {
+        );
+        console.log('[renameChat] chats:', renamed);
+        return { chats: renamed };
+      }),
+      pinChat: (chatId: string) => set((state) => {
+        console.log('[pinChat] chatId:', chatId);
+        return { pinned: { ...state.pinned, [chatId]: true } };
+      }),
+      unpinChat: (chatId: string) => set((state) => {
         const { [chatId]: _, ...rest } = state.pinned;
+        console.log('[unpinChat] chatId:', chatId);
         return { pinned: rest };
       }),
-      setSearch: (search) => set({ search }),
-      updateChatMessages: (chatId, messages) => set((state) => ({
-        chats: state.chats.map((chat) =>
+      setSearch: (search: string) => {
+        console.log('[setSearch] search:', search);
+        set({ search });
+      },
+      updateChatMessages: (chatId: string, messages: Message[]) => set((state) => {
+        const updated = state.chats.map((chat) =>
           chat.chatId === chatId ? { ...chat, messages, updatedAt: new Date().toISOString() } : chat
-        ),
-      })),
+        );
+        console.log('[updateChatMessages] chatId:', chatId, 'messages:', messages);
+        return { chats: updated };
+      }),
     }),
     {
       name: 'chat-storage', // unique name for localStorage key

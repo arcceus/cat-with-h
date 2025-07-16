@@ -208,6 +208,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       updatedAt: new Date().toISOString(),
     };
     addChat(newChat);
+    setActiveChat(newChat.chatId); // Ensure new chat is set as active
   };
 
   const handleRename = (chatId: string) => {

@@ -20,7 +20,6 @@ import { useTheme } from 'next-themes';
 import CustomNode from './customNode';
 import CustomEdge from './CustomEdge';
 import React from 'react';
-import CanvasDropdown from './CanvasDropdown';
 import { useCanvasStore } from '../store/canvasStore';
 
 type MenuState = {
@@ -97,7 +96,6 @@ function CanvasInner() {
 
   return (
     <div style={{ width: '100%', height: '100%' }}>
-    {/* <div style={{ width: '100vw', height: '100vh' }}> */}
       <div className="absolute z-20 top-4 left-4">
         {/* <CanvasDropdown /> */}
       </div>
@@ -112,10 +110,11 @@ function CanvasInner() {
         onNodeContextMenu={onNodeContextMenu}
         onPaneClick={onPaneClick}
         fitView
+        snapToGrid
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
       >
-        <MiniMap />
+        {/* <MiniMap /> */}
         <Controls />
         <Background />
       </ReactFlow>

@@ -183,9 +183,33 @@
   transform: scale(1.05);
 }
 
+/* Custom short/thin scrollbar for chat message area */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #bdbdbd transparent;
+}
+.custom-scrollbar::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+  border-radius: 8px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #bdbdbd;
+  border-radius: 8px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+  margin-top: 12px;
+  margin-bottom: 48px;
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
+  }
+  html, body {
+    height: 100vh;
+    overflow: hidden;
   }
   body {
     @apply bg-background text-foreground;
