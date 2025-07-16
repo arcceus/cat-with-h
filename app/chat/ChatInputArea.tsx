@@ -132,15 +132,20 @@ const ChatInputArea: React.FC<ChatInputAreaProps> = ({
       </div>
       {/* Scroll to bottom button, floating above input, centered */}
       {showScrollButton && (
-        <div className="absolute -top-12 left-1/2 -translate-x-1/2">
+        <div className="absolute -top-12 left-1/2 -translate-x-1/2 z-30">
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
                   variant="outline"
                   size="icon"
-                  className="h-9 w-9 rounded-full shadow-lg"
-                  onClick={scrollToBottom}
+                  className="h-9 w-9 rounded-full shadow-lg bg-background hover:bg-accent"
+                  onClick={(e) => {
+                    e.preventDefault()
+                    e.stopPropagation()
+                    console.log('Button clicked')
+                    scrollToBottom()
+                  }}
                 >
                   <ChevronDown className="h-4 w-4" />
                 </Button>

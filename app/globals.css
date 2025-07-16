@@ -203,6 +203,81 @@
   margin-bottom: 48px;
 }
 
+/* Optimizations for streaming performance */
+.messages-container {
+  /* Optimize for smooth scrolling during streaming */
+  will-change: scroll-position;
+  /* Use hardware acceleration for smoother animations */
+  transform: translateZ(0);
+  /* Optimize paint and layout during streaming */
+  contain: layout style paint;
+  /* Improve mouse scrolling */
+  scroll-behavior: smooth;
+  /* Make mouse scrolling more responsive */
+  overscroll-behavior: contain;
+  /* Prevent layout shifts during resizing */
+  min-width: 0;
+  /* Optimize for performance during resize */
+  contain: layout style paint size;
+}
+
+/* Prevent message width changes during resize */
+.messages-container > div {
+  /* Prevent layout shifts */
+  contain: layout style;
+  /* Stable width calculations */
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* Optimize chat messages for performance */
+.chat-message {
+  /* Prevent layout shifts during resize */
+  contain: layout style;
+  /* Stable dimensions */
+  min-width: 0;
+  /* Prevent reflows */
+  will-change: auto;
+}
+
+/* Faster transitions for streaming messages */
+.streaming-message {
+  transition: all 0.075s ease-out;
+  will-change: contents;
+}
+
+/* Smooth scroll behavior for streaming */
+.streaming-scroll {
+  scroll-behavior: smooth;
+  /* Optimize for frequent updates during streaming */
+  will-change: scroll-position;
+  /* Improve mouse wheel scrolling */
+  scroll-snap-type: y proximity;
+}
+
+/* Improve mouse scrolling experience */
+.messages-container::-webkit-scrollbar {
+  width: 12px; /* Slightly wider for easier mouse interaction */
+}
+
+.messages-container::-webkit-scrollbar-thumb {
+  background: #bdbdbd;
+  border-radius: 8px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+.messages-container::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+  background-clip: content-box;
+}
+
+.messages-container::-webkit-scrollbar-track {
+  background: transparent;
+  margin-top: 12px;
+  margin-bottom: 48px;
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

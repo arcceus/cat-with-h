@@ -5,7 +5,76 @@ import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
 import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
-import { Copy, RotateCcw } from 'lucide-react'
+import { Copy, RotateCcw, WrapText, FileText } from 'lucide-react'
+import { useState } from 'react'
+
+// CodeBlock component with header and buttons
+const CodeBlock = ({ language, code, copyToClipboard, isStreaming }: {
+  language: string
+  code: string
+  copyToClipboard: (text: string) => void
+  isStreaming: boolean
+}) => {
+  const [isWrapped, setIsWrapped] = useState(false)
+
+  return (
+    <div className="relative group my-2 border border-border rounded-md overflow-hidden">
+      {/* Header with language and buttons */}
+      <div className="flex items-center justify-between px-3 py-2 bg-muted/50 border-b border-border">
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-medium text-muted-foreground uppercase">{language}</span>
+        </div>
+        <div className="flex items-center gap-1">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-6 w-6 p-0 opacity-70 hover:opacity-100 transition-opacity"
+            onClick={() => setIsWrapped(!isWrapped)}
+            title={isWrapped ? "Disable text wrapping" : "Enable text wrapping"}
+          >
+            {isWrapped ? <FileText className="h-3 w-3" /> : <WrapText className="h-3 w-3" />}
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-6 w-6 p-0 opacity-70 hover:opacity-100 transition-opacity"
+            onClick={() => copyToClipboard(code)}
+            title="Copy to clipboard"
+          >
+            <Copy className="h-3 w-3" />
+          </Button>
+        </div>
+      </div>
+      
+      {/* Code content */}
+      <div className={cn(
+        "overflow-x-auto",
+        isWrapped && "whitespace-pre-wrap break-words"
+      )}>
+        <SyntaxHighlighter
+          style={oneDark}
+          language={language}
+          PreTag="div"
+          className="text-sm font-mono m-0"
+          customStyle={{ 
+            minWidth: 0, 
+            maxWidth: '100%', 
+            fontSize: '0.95rem', 
+            background: 'var(--muted)', 
+            border: 'none',
+            padding: '1rem',
+            margin: 0,
+            // Optimize for streaming performance
+            willChange: isStreaming ? 'contents' : 'auto',
+            whiteSpace: isWrapped ? 'pre-wrap' : 'pre'
+          }}
+        >
+          {code}
+        </SyntaxHighlighter>
+      </div>
+    </div>
+  )
+}
 
 const ChatMessage = React.memo(function ChatMessage({ 
   message, 
@@ -19,25 +88,32 @@ const ChatMessage = React.memo(function ChatMessage({
   copyToClipboard: (text: string) => void,
   'data-message-id'?: string
 }) {
+  // Optimize for streaming performance
+  const isStreaming = status === 'streaming' && message.id === 'pending-ai'
+  
   return (
     <motion.div
       key={message.id}
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -10 }}
-      transition={{ duration: 0.2 }}
+      transition={{ 
+        duration: isStreaming ? 0.1 : 0.2, // Faster animation for streaming
+        ease: isStreaming ? "easeOut" : "easeInOut" // Smoother easing for streaming
+      }}
       className={cn(
-        "flex gap-4 mr-[12px] mt-[10px] mb-[40px]",
+        "flex gap-4 mr-[12px] mt-[10px] mb-[40px] chat-message",
         message.role === 'user' ? 'justify-end' : message.role === 'assistant' ? 'justify-start' : ''
       )}
       data-message-id={dataMessageId}
     >
       <div
         className={cn(
-          "max-w-[80%] rounded-lg px-4 py-3 transition-colors duration-300",
+          "max-w-3xl rounded-lg px-4 py-3 transition-colors duration-300",
           message.role === 'user'
             ? 'bg-primary text-primary-foreground'
-            : 'bg-background'
+            : 'bg-background',
+          isStreaming && 'streaming-message' // Apply streaming optimizations
         )}
       >
         {message.role === 'assistant' ? (
@@ -47,26 +123,12 @@ const ChatMessage = React.memo(function ChatMessage({
                 code({ inline, className, children, ...props }: any) {
                   const match = /language-(\w+)/.exec(className || '')
                   return !inline && match ? (
-                    <div className="relative group my-2">
-                      <SyntaxHighlighter
-                        style={oneDark}
-                        language={match[1]}
-                        PreTag="div"
-                        className="rounded-md text-sm max-w-full border border-border bg-muted/80 p-3 font-mono"
-                        customStyle={{ minWidth: 0, maxWidth: '100%', fontSize: '0.95rem', background: 'var(--muted)', border: '1px solid var(--border)' }}
-                        {...props}
-                      >
-                        {String(children).replace(/\n$/, '')}
-                      </SyntaxHighlighter>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="absolute top-2 right-2 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                        onClick={() => copyToClipboard(String(children))}
-                      >
-                        <Copy className="h-3 w-3" />
-                      </Button>
-                    </div>
+                    <CodeBlock 
+                      language={match[1]} 
+                      code={String(children).replace(/\n$/, '')}
+                      copyToClipboard={copyToClipboard}
+                      isStreaming={isStreaming}
+                    />
                   ) : (
                     <code className="bg-muted px-1 py-0.5 rounded text-sm font-mono" {...props}>
                       {children}
@@ -87,6 +149,17 @@ const ChatMessage = React.memo(function ChatMessage({
             >
               {message.content || ''}
             </ReactMarkdown>
+            {/* Typing indicator for streaming */}
+            {isStreaming && (
+              <div className="flex items-center gap-1 mt-2">
+                <div className="flex space-x-1">
+                  <div className="w-2 h-2 bg-muted-foreground/60 rounded-full animate-pulse"></div>
+                  <div className="w-2 h-2 bg-muted-foreground/60 rounded-full animate-pulse" style={{ animationDelay: '0.1s' }}></div>
+                  <div className="w-2 h-2 bg-muted-foreground/60 rounded-full animate-pulse" style={{ animationDelay: '0.2s' }}></div>
+                </div>
+                <span className="text-xs text-muted-foreground ml-2">AI is typing...</span>
+              </div>
+            )}
             {/* Action buttons */}
             <div className="flex items-center gap-2 pt-2">
               <Button

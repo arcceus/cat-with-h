@@ -60,7 +60,7 @@ export default function Workspace() {
       <AppSidebar />
       <SidebarInset>
         <ResizablePanelGroup direction="horizontal" className="h-full w-full">
-          <ResizablePanel defaultSize={60} minSize={15} maxSize={70}>
+          <ResizablePanel defaultSize={60} minSize={60} maxSize={70}>
             <div className="h-full w-full">
               <div className="h-full w-full rounded-xl overflow-hidden">
                 <ChatPage/>
@@ -68,7 +68,7 @@ export default function Workspace() {
             </div>
           </ResizablePanel>
           <ResizableHandle />
-          <ResizablePanel defaultSize={50} minSize={30}>
+          <ResizablePanel defaultSize={40} minSize={20}>
             <div className="h-full w-full">
               <div className="h-full w-full overflow-hidden">
                 <Canvas />

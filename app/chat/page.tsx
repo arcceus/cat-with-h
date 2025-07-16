@@ -109,7 +109,7 @@ export default function ChatPage() {
     }
   }
 
-  // Auto-scroll to bottom when new messages arrive
+  // Only scroll when user sends a message - no auto-scrolling during streaming
   useEffect(() => {
     if (pendingUserMessage) {
       // When user sends a message, scroll to show their message at the top with some context
@@ -125,20 +125,8 @@ export default function ChatPage() {
           }
         }, 100)
       }
-    } else if (status === 'streaming' && sdkMessages.length > 0) {
-      // When AI starts streaming, scroll to show the streaming response
-      const lastMessage = sdkMessages[sdkMessages.length - 1]
-      if (lastMessage.role === 'assistant') {
-        const aiMessageElement = document.querySelector('[data-message-id="pending-ai"]')
-        if (aiMessageElement) {
-          aiMessageElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
-        }
-      }
-    } else {
-      // When AI finishes responding, scroll to bottom
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
     }
-  }, [flatMessages, pendingUserMessage, status, sdkMessages])
+  }, [pendingUserMessage])
 
   // Check if scroll button should be shown
   useEffect(() => {
@@ -146,12 +134,14 @@ export default function ChatPage() {
       const scrollContainer = document.querySelector('.messages-container')
       if (scrollContainer) {
         const { scrollTop, scrollHeight, clientHeight } = scrollContainer
-        setShowScrollButton(scrollHeight - scrollTop - clientHeight > 100)
+        const isNearBottom = scrollHeight - scrollTop - clientHeight < 100
+        setShowScrollButton(!isNearBottom)
       }
     }
+    
     const scrollContainer = document.querySelector('.messages-container')
     if (scrollContainer) {
-      scrollContainer.addEventListener('scroll', handleScroll)
+      scrollContainer.addEventListener('scroll', handleScroll, { passive: true })
       return () => scrollContainer.removeEventListener('scroll', handleScroll)
     }
   }, [])
@@ -169,7 +159,15 @@ export default function ChatPage() {
   }, [])
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    console.log('Scroll to bottom called')
+    const scrollContainer = document.querySelector('.messages-container')
+    if (scrollContainer) {
+      console.log('Scroll container found, scrolling to bottom')
+      // Simple and reliable scroll to bottom
+      scrollContainer.scrollTop = scrollContainer.scrollHeight
+    } else {
+      console.log('Scroll container not found')
+    }
   }
 
   const copyToClipboard = async (text: string) => {
@@ -198,7 +196,7 @@ export default function ChatPage() {
   return (
     <div className="h-full flex flex-col">
       {/* Messages Area - takes remaining space, scrollable */}
-      <div className="flex-1 overflow-y-auto custom-scrollbar messages-container min-h-0">
+      <div className="flex-1 overflow-y-auto custom-scrollbar messages-container streaming-scroll min-h-0">
         {flatMessages.length === 0 ? (
           <div className="text-center py-12">
             <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent mb-4">
