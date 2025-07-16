@@ -3,7 +3,6 @@ import {
   Handle,
   Position,
   NodeProps,
-  useReactFlow,
   NodeResizeControl
  } from '@xyflow/react';
 import {
@@ -15,28 +14,30 @@ import {
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { duplicateNode, deleteNode, addNode } from './nodeActions';
+import { useDuplicateNode, useDeleteNode, useAddNode } from './nodeActions';
 import { Move } from 'lucide-react';
 
 export default function CustomNode({ id, data, isConnectable }: NodeProps) {
-  const { getNode, setNodes, addNodes, setEdges } = useReactFlow();
+  const duplicateNode = useDuplicateNode();
+  const deleteNode = useDeleteNode();
+  const addNode = useAddNode();
 
   const [dialogOpen, setDialogOpen] = React.useState(false);
   const [newLabel, setNewLabel] = React.useState('');
 
   const handleDuplicate = useCallback(() => {
-    duplicateNode(id, getNode, addNodes);
-  }, [id, getNode, addNodes]);
+    duplicateNode(id);
+  }, [id, duplicateNode]);
 
   const handleDelete = useCallback(() => {
-    deleteNode(id, setNodes, setEdges);
-  }, [id, setNodes, setEdges]);
+    deleteNode(id);
+  }, [id, deleteNode]);
 
   const handleAddNode = useCallback(() => {
-    addNode(id, getNode, addNodes, newLabel);
+    addNode(id, newLabel);
     setNewLabel('');
     setDialogOpen(false);
-  }, [id, getNode, addNodes, newLabel]);
+  }, [id, addNode, newLabel]);
 
   return (
     <ContextMenu>

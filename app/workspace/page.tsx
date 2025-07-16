@@ -1,6 +1,5 @@
 "use client";
 import { AppSidebar } from "@/components/app-sidebar";
-import { Separator } from "@/components/ui/separator"
 import {
   SidebarInset,
   SidebarProvider,
@@ -13,27 +12,54 @@ import {
   ResizableHandle,
 } from "@/components/ui/resizable";
 import Canvas from "../canvas/page";
+import { useChatStore } from "@/app/store/chatStore";
+import { Plus } from "lucide-react";
+import { useSidebar } from "@/components/ui/sidebar";
+
+function FloatingControls({ handleNewChat }: { handleNewChat: () => void }) {
+  const { state } = useSidebar();
+  return (
+    <div className="fixed top-3 left-1 z-50 flex items-center min-h-8 px-2 gap-2 bg-sidebar rounded-lg shadow-lg">
+      <SidebarTrigger />
+      <ThemeToggle />
+      {state === "collapsed" && (
+        <button
+          onClick={handleNewChat}
+          className="flex items-center justify-center w-7 h-6 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition"
+          title="New Chat"
+        >
+          <Plus className="w-4 h-4" />
+        </button>
+      )}
+    </div>
+  );
+}
 
 export default function Workspace() {
+  const { addChat, chats } = useChatStore();
+
+  const handleNewChat = () => {
+    const newChat = {
+      chatId: `chat_${Date.now()}`,
+      title: `New Chat ${chats.length + 1}`,
+      messages: [],
+      updatedAt: new Date().toISOString(),
+    };
+    addChat(newChat);
+  };
+
   return (
     <SidebarProvider
       style={{
         "--sidebar-width": "16rem",
       } as React.CSSProperties}
     >
+      <FloatingControls handleNewChat={handleNewChat} />
       <AppSidebar />
       <SidebarInset>
-        <header className="flex h-12 shrink-0 items-center gap-2 px-4">
-          <SidebarTrigger className="-ml-1" />
-          <Separator
-            orientation="vertical"
-            className="mr-2 data-[orientation=vertical]:h-4"
-          />
-          <ThemeToggle />
-        </header>
         <ResizablePanelGroup direction="horizontal" className="h-full w-full">
           <ResizablePanel defaultSize={50} minSize={15} maxSize={70}>
-            <div className="flex flex-1 flex-col gap-4 p-4 pt-0 h-full">
+            <div className="flex flex-1 flex-col gap-4 p-4 pt-4 h-full">
               <div className="grid auto-rows-min gap-4 md:grid-cols-3">
                 <div className="bg-muted/50 aspect-video rounded-xl" />
                 <div className="bg-muted/50 aspect-video rounded-xl" />
@@ -44,8 +70,8 @@ export default function Workspace() {
           </ResizablePanel>
           <ResizableHandle />
           <ResizablePanel defaultSize={50} minSize={30}>
-            <div className="h-full w-full p-4 pt-0">
-              <div className="h-full w-full rounded-xl overflow-hidden">
+            <div className="h-full w-full">
+              <div className="h-full w-full overflow-hidden">
                 <Canvas />
               </div>
             </div>

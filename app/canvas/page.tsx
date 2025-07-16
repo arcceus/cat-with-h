@@ -5,26 +5,29 @@ import {
   MiniMap,
   Controls,
   Background,
-  applyNodeChanges,
-  applyEdgeChanges,
   addEdge,
-  NodeChange,
-  EdgeChange,
   Connection,
   Node,
   Edge,
-  NodeMouseHandler,
   NodeTypes,
   useNodesState,
   useEdgesState,
   ReactFlowProvider,
+  NodeMouseHandler,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { useTheme } from 'next-themes';
-// import ContextMenu from './ContextMenu';
 import CustomNode from './customNode';
 import CustomEdge from './CustomEdge';
 import React from 'react';
+import CanvasDropdown from './CanvasDropdown';
+import { useCanvasStore } from '../store/canvasStore';
+
+type MenuState = {
+  id: string;
+  x: number;
+  y: number;
+} | null;
 
 const nodeTypes: NodeTypes = {
   custom: CustomNode,
@@ -40,11 +43,6 @@ const initialNodes: Node[] = [
 ];
 const initialEdges: Edge[] = [{ id: 'n1-n2', source: 'n1', target: 'n2', type: 'default' }];
 
-type MenuState = {
-  id: string;
-  x: number;
-  y: number;
-} | null;
 
 export default function Canvas() {
   return (
@@ -55,11 +53,23 @@ export default function Canvas() {
 }
 
 function CanvasInner() {
-  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+  const { canvases, currentKey, saveCanvas } = useCanvasStore();
+  const [nodes, setNodes, onNodesChange] = useNodesState(canvases[currentKey]?.nodes || initialNodes);
+  const [edges, setEdges, onEdgesChange] = useEdgesState(canvases[currentKey]?.edges || initialEdges);
   const [menu, setMenu] = useState<MenuState>(null);
   const ref = useRef<HTMLDivElement>(null);
   const { theme } = useTheme();
+
+  // Sync Zustand on any change
+  React.useEffect(() => {
+    saveCanvas(currentKey, { nodes, edges });
+  }, [nodes, edges, currentKey, saveCanvas]);
+
+  // When canvas key changes, load nodes/edges
+  React.useEffect(() => {
+    setNodes(canvases[currentKey]?.nodes || initialNodes);
+    setEdges(canvases[currentKey]?.edges || initialEdges);
+  }, [currentKey]);
 
   const colorMode = theme === "dark" ? "dark" : "light";
 
@@ -84,9 +94,13 @@ function CanvasInner() {
 
   const onPaneClick = useCallback(() => setMenu(null), [setMenu]);
 
+
   return (
-    // <div style={{ width: '100vw', height: '100vh' }}>
-    <div style={{ width: '100vw', height: '100vh' }}>
+    <div style={{ width: '100%', height: '100%' }}>
+    {/* <div style={{ width: '100vw', height: '100vh' }}> */}
+      <div className="absolute z-20 top-4 left-4">
+        {/* <CanvasDropdown /> */}
+      </div>
       <ReactFlow
         ref={ref}
         nodes={nodes}

@@ -1,170 +1,346 @@
-"use client";
-import * as React from "react";
+"use client"
+
+import * as React from "react"
+import {
+  BookOpen,
+  Bot,
+  Frame,
+  LifeBuoy,
+  Map,
+  PieChart,
+  Send,
+  Settings2,
+  SquareTerminal,
+  MoreVertical,
+  Trash2,
+  Edit2,
+  Plus,
+  Pin,
+  PinOff,
+} from "lucide-react"
+
+import { NavUser } from "@/components/nav-user"
 import {
   Sidebar,
-  SidebarContent,
-  SidebarGroup,
+  SidebarFooter,
   SidebarHeader,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-} from "@/components/ui/sidebar";
-import { Plus, MoreVertical } from "lucide-react";
-import type { Chat } from "@/app/types";
-import { useChatStore } from "@/app/store/chatStore";
-import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuItem,
-} from "@/components/ui/dropdown-menu";
+  SidebarTrigger,
+} from "@/components/ui/sidebar"
+import { useChatStore } from '@/app/store/chatStore';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { ContextMenu, ContextMenuTrigger, ContextMenuContent, ContextMenuItem } from '@/components/ui/context-menu';
+import { Separator } from '@/components/ui/separator';
+import { useState } from 'react';
+import type { Chat } from '@/app/types';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
+import CanvasDropdown from "@/app/canvas/CanvasDropdown"
 
-// Mock chat data
-const mockChats: Chat[] = [
-  {
-    chatId: "1",
-    title: "Project Discussion",
-    updatedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-    messages: [],
+const data = {
+  user: {
+    name: "deepak",
+    email: "m@example.com",
+    avatar: "/avatars/shadcn.jpg",
   },
-  {
-    chatId: "2",
-    title: "AI Support",
-    updatedAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
-    messages: [],
-  },
-  {
-    chatId: "3",
-    title: "Old Chat",
-    updatedAt: new Date(Date.now() - 40 * 24 * 60 * 60 * 1000).toISOString(),
-    messages: [],
-  },
-  {
-    chatId: "4",
-    title: "Recent Chat",
-    updatedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-    messages: [],
-  },
-];
+  navMain: [
+    {
+      title: "Playground",
+      url: "#",
+      icon: SquareTerminal,
+      isActive: true,
+      items: [
+        {
+          title: "History",
+          url: "#",
+        },
+        {
+          title: "Starred",
+          url: "#",
+        },
+        {
+          title: "Settings",
+          url: "#",
+        },
+      ],
+    },
+    {
+      title: "Models",
+      url: "#",
+      icon: Bot,
+      items: [
+        {
+          title: "Genesis",
+          url: "#",
+        },
+        {
+          title: "Explorer",
+          url: "#",
+        },
+        {
+          title: "Quantum",
+          url: "#",
+        },
+      ],
+    },
+    {
+      title: "Documentation",
+      url: "#",
+      icon: BookOpen,
+      items: [
+        {
+          title: "Introduction",
+          url: "#",
+        },
+        {
+          title: "Get Started",
+          url: "#",
+        },
+        {
+          title: "Tutorials",
+          url: "#",
+        },
+        {
+          title: "Changelog",
+          url: "#",
+        },
+      ],
+    },
+    {
+      title: "Settings",
+      url: "#",
+      icon: Settings2,
+      items: [
+        {
+          title: "General",
+          url: "#",
+        },
+        {
+          title: "Team",
+          url: "#",
+        },
+        {
+          title: "Billing",
+          url: "#",
+        },
+        {
+          title: "Limits",
+          url: "#",
+        },
+      ],
+    },
+  ],
+  navSecondary: [
+    {
+      title: "Support",
+      url: "#",
+      icon: LifeBuoy,
+    },
+    {
+      title: "Feedback",
+      url: "#",
+      icon: Send,
+    },
+  ],
+  projects: [
+    {
+      name: "Design Engineering",
+      url: "#",
+      icon: Frame,
+    },
+    {
+      name: "Sales & Marketing",
+      url: "#",
+      icon: PieChart,
+    },
+    {
+      name: "Travel",
+      url: "#",
+      icon: Map,
+    },
+  ],
+}
 
-export function AppSidebar() {
-  // Use Zustand global state
-  const chats = useChatStore((state) => state.chats);
-  const activeChatId = useChatStore((state) => state.activeChatId);
-  const addChat = useChatStore((state) => state.addChat);
-  const setActiveChat = useChatStore((state) => state.setActiveChat);
-  const deleteChat = useChatStore((state) => state.deleteChat);
-  const renameChat = useChatStore((state) => state.renameChat);
+export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const { chats, activeChatId, addChat, setActiveChat, deleteChat, renameChat, pinned, pinChat, unpinChat, search, setSearch } = useChatStore();
+  const [renameId, setRenameId] = useState<string | null>(null);
+  const [renameValue, setRenameValue] = useState('');
 
-  // On first mount, populate with mock data if empty
-  React.useEffect(() => {
-    if (chats.length === 0) {
-      mockChats.forEach((chat) => addChat(chat));
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  // Grouping helpers
+  const now = new Date();
+  const isToday = (date: Date) => date.toDateString() === now.toDateString();
+  const isLast7Days = (date: Date) => {
+    const diff = (now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24);
+    return diff < 7 && !isToday(date);
+  };
+  const isLast30Days = (date: Date) => {
+    const diff = (now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24);
+    return diff < 30 && !isToday(date) && !isLast7Days(date);
+  };
+  const isOlder = (date: Date) => (now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24) >= 30;
 
-  // Group chats by date in render body
-  const now = Date.now();
-  const last7 = chats.filter(
-    (chat) => (now - new Date(chat.updatedAt).getTime()) / (1000 * 60 * 60 * 24) <= 7
-  );
-  const last30 = chats.filter(
-    (chat) =>
-      (now - new Date(chat.updatedAt).getTime()) / (1000 * 60 * 60 * 24) > 7 &&
-      (now - new Date(chat.updatedAt).getTime()) / (1000 * 60 * 60 * 24) <= 30
-  );
-  const older = chats.filter(
-    (chat) => (now - new Date(chat.updatedAt).getTime()) / (1000 * 60 * 60 * 24) > 30
-  );
-  const groups = [
-    { label: "Last 7 days", chats: last7 },
-    { label: "Last 30 days", chats: last30 },
-    { label: "Older", chats: older },
-  ];
+  // Pin logic
+  const handlePin = (chatId: string) => pinned[chatId] ? unpinChat(chatId) : pinChat(chatId);
 
-  function handleNewChat() {
+  // Filter and sort chats
+  const filteredChats = chats.filter(chat => chat.title.toLowerCase().includes(search.toLowerCase()));
+  const pinnedChats = filteredChats.filter(chat => pinned[chat.chatId]);
+  const unpinnedChats = filteredChats.filter(chat => !pinned[chat.chatId]);
+
+  // Group unpinned chats
+  const groupChats = (chats: Chat[]) => {
+    const groups: Record<string, Chat[]> = { Today: [], 'Last 7 days': [], 'Last 30 days': [], Older: [] };
+    chats.forEach(chat => {
+      const date = new Date(chat.updatedAt);
+      if (isToday(date)) groups['Today'].push(chat);
+      else if (isLast7Days(date)) groups['Last 7 days'].push(chat);
+      else if (isLast30Days(date)) groups['Last 30 days'].push(chat);
+      else groups['Older'].push(chat);
+    });
+    return groups;
+  };
+  const grouped = groupChats(unpinnedChats);
+
+  const handleNewChat = () => {
     const newChat: Chat = {
-      chatId: Date.now().toString(),
+      chatId: `chat_${Date.now()}`,
       title: `New Chat ${chats.length + 1}`,
-      updatedAt: new Date().toISOString(),
       messages: [],
+      updatedAt: new Date().toISOString(),
     };
     addChat(newChat);
-  }
+  };
 
-  function handleSelectChat(chatId: string) {
-    setActiveChat(chatId);
-  }
-
-  function handleDeleteChat(chatId: string) {
-    deleteChat(chatId);
-  }
-
-  function handleRenameChat(chatId: string, currentTitle: string) {
-    // For demo: use prompt. In real app, use a dialog/modal.
-    const newTitle = window.prompt("Rename chat", currentTitle);
-    if (newTitle && newTitle !== currentTitle) {
-      renameChat(chatId, newTitle);
+  const handleRename = (chatId: string) => {
+    if (renameValue.trim()) {
+      renameChat(chatId, renameValue.trim());
+      setRenameId(null);
+      setRenameValue('');
     }
-  }
+  };
 
   return (
-    <Sidebar variant="floating">
+    <Sidebar variant="inset" {...props}>
       <SidebarHeader>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton size="lg" onClick={handleNewChat}>
-              <Plus className="mr-2 size-4" />
-              New Chat
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
-      </SidebarHeader>
-      <SidebarContent>
-        {groups.map(
-          (group) =>
-            group.chats.length > 0 && (
-              <SidebarGroup key={group.label}>
-                <div className="px-2 py-2 text-xs font-semibold text-muted-foreground">
-                  {group.label}
-                </div>
-                <SidebarMenu>
-                  {group.chats.map((chat) => (
-                    <SidebarMenuItem key={chat.chatId}>
-                      <SidebarMenuButton
-                        isActive={chat.chatId === activeChatId}
-                        onClick={() => handleSelectChat(chat.chatId)}
-                        className="flex w-full items-center justify-between text-left"
+        <div className="flex">
+          <div className="pt-6"/>
+        </div>
+        <div className="flex flex-col gap-3 mt-2 w-56 mx-auto">
+          
+          <Button
+            onClick={handleNewChat}
+            className="w-full justify-start rounded-lg bg-primary text-primary-foreground font-medium shadow-sm hover:bg-primary/90 h-8 text-sm gap-2"
+            variant="default"
+          >
+            <Plus className="h-4 w-4" /> New Chat
+          </Button>
+          <CanvasDropdown />
+          <Input
+            className="w-full h-8 rounded-lg border border-muted-foreground/20 bg-muted px-3 py-1.5 text-sm placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none transition"
+            placeholder="Search chats..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+          />
+          <Separator className="my-1 w-[90%] mx-auto" />
+        </div>
+        {/* Chat List */}
+        <div className="mt-2 flex flex-col gap-1 max-h-72 overflow-y-auto w-56 mx-auto">
+          {/* Pinned Chats */}
+          {pinnedChats.length > 0 && (
+            <>
+              <div className="text-xs text-muted-foreground font-semibold px-1 pt-2 pb-1">Pinned</div>
+              {pinnedChats.map(chat => (
+                <ContextMenu key={chat.chatId}>
+                  <ContextMenuTrigger asChild>
+                    <div
+                      className={`group flex items-center justify-between rounded-lg px-2 py-1 cursor-pointer transition-colors text-xs min-h-[35px] ${activeChatId === chat.chatId ? 'bg-primary/10 text-primary' : 'hover:bg-muted/70'}`}
+                      onClick={() => setActiveChat(chat.chatId)}
+                    >
+                      {renameId === chat.chatId ? (
+                        <Input
+                          className="h-7 text-xs"
+                          value={renameValue}
+                          onChange={e => setRenameValue(e.target.value)}
+                          autoFocus
+                          onBlur={() => handleRename(chat.chatId)}
+                          onKeyDown={e => e.key === 'Enter' && handleRename(chat.chatId)}
+                        />
+                      ) : (
+                        <span
+                          className="truncate flex-1 text-sm font-normal"
+                          onDoubleClick={() => {
+                            setRenameId(chat.chatId);
+                            setRenameValue(chat.title);
+                          }}
+                        >
+                          {chat.title}
+                        </span>
+                      )}
+                    </div>
+                  </ContextMenuTrigger>
+                  <ContextMenuContent>
+                    <ContextMenuItem onClick={() => handlePin(chat.chatId)}>
+                      {pinned[chat.chatId] ? <><PinOff className="mr-2 h-3 w-3" /> Unpin</> : <><Pin className="mr-2 h-3 w-3" /> Pin</>}
+                    </ContextMenuItem>
+                    <ContextMenuItem onClick={() => deleteChat(chat.chatId)} className="text-red-600">
+                      <Trash2 className="mr-2 h-3 w-3" /> Delete
+                    </ContextMenuItem>
+                  </ContextMenuContent>
+                </ContextMenu>
+              ))}
+            </>
+          )}
+          {/* Grouped Chats */}
+          {Object.entries(grouped).map(([group, groupChats]) =>
+            groupChats.length > 0 && (
+              <React.Fragment key={group}>
+                <div className="text-xs text-muted-foreground font-semibold px-1 pt-2 pb-1">{group}</div>
+                {groupChats.map(chat => (
+                  <ContextMenu key={chat.chatId}>
+                    <ContextMenuTrigger asChild>
+                      <div
+                        className={`flex items-center justify-between rounded-lg px-2 py-1 cursor-pointer transition-colors text-xs min-h-[35px] ${activeChatId === chat.chatId ? 'bg-primary/10 text-primary' : 'hover:bg-muted/70'}`}
+                        onClick={() => setActiveChat(chat.chatId)}
                       >
-                        <span className="truncate flex-1">{chat.title}</span>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <button
-                              className="ml-2 p-1 rounded hover:bg-accent"
-                              onClick={e => e.stopPropagation()}
-                              aria-label="More options"
-                            >
-                              <MoreVertical className="size-4" />
-                            </button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => handleRenameChat(chat.chatId, chat.title)}>
-                              Rename
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleDeleteChat(chat.chatId)} variant="destructive">
-                              Delete
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  ))}
-                </SidebarMenu>
-              </SidebarGroup>
+                        {renameId === chat.chatId ? (
+                          <Input
+                            className="h-7 text-xs"
+                            value={renameValue}
+                            onChange={e => setRenameValue(e.target.value)}
+                            autoFocus
+                            onBlur={() => handleRename(chat.chatId)}
+                            onKeyDown={e => e.key === 'Enter' && handleRename(chat.chatId)}
+                          />
+                        ) : (
+                          <span
+                            className="group truncate flex-1 text-sm font-normal"
+                            onDoubleClick={() => {
+                              setRenameId(chat.chatId);
+                              setRenameValue(chat.title);
+                            }}
+                          >
+                            {chat.title}
+                          </span>
+                        )}
+                      </div>
+                    </ContextMenuTrigger>
+                    <ContextMenuContent>
+                      <ContextMenuItem onClick={() => handlePin(chat.chatId)}>
+                        {pinned[chat.chatId] ? <><PinOff className="mr-2 h-3 w-3" /> Unpin</> : <><Pin className="mr-2 h-3 w-3" /> Pin</>}
+                      </ContextMenuItem>
+                      <ContextMenuItem onClick={() => deleteChat(chat.chatId)} className="text-red-600">
+                        <Trash2 className="mr-2 h-3 w-3" /> Delete
+                      </ContextMenuItem>
+                    </ContextMenuContent>
+                  </ContextMenu>
+                ))}
+              </React.Fragment>
             )
-        )}
-      </SidebarContent>
+          )}
+        </div>
+      </SidebarHeader>
+      <SidebarFooter className="mt-auto flex items-end w-56 mx-auto">
+        <NavUser user={data.user} />
+      </SidebarFooter>
     </Sidebar>
-  );
+  )
 }
