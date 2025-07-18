@@ -11,7 +11,6 @@ import {
 import { useState, useRef, useEffect, useLayoutEffect } from 'react'
 import type { Message } from '../types'
 import React, { useCallback } from 'react'
-import ChatInputArea from './ChatInputArea'
 import ChatMessage from './ChatMessage'
 
 // Convert from your Message type to SDK/UI message type
@@ -40,53 +39,30 @@ const AI_MODELS = [
   { id: 'claude-3', name: 'Claude 3', icon: Sparkles, description: 'Anthropic\'s latest' },
 ]
 
-export default function ChatPage() {
-  const { activeChatId, chats, updateChatMessages } = useChatStore()
-  const [selectedModel, setSelectedModel] = useState(AI_MODELS[0])
-  const [webSearchEnabled, setWebSearchEnabled] = useState(false)
-  const [showScrollButton, setShowScrollButton] = useState(false)
+export default function ChatPage({
+  status,
+  pendingUserMessage,
+  sdkMessages,
+  setPendingUserMessage
+}: {
+  canvasEnabled: boolean,
+  setCanvasEnabled: (v: boolean) => void,
+  chatEnabled: boolean,
+  setChatEnabled: (v: boolean) => void,
+  flipLayout: boolean,
+  setFlipLayout: (v: boolean) => void,
+  status: string,
+  pendingUserMessage: string | undefined,
+  sdkMessages: any[],
+  setPendingUserMessage: (v: string | undefined) => void
+}) {
+  const { activeChatId, chats } = useChatStore()
+  // const [selectedModel, setSelectedModel] = useState(AI_MODELS[0])
+  // const [webSearchEnabled, setWebSearchEnabled] = useState(false)
   const userMessageRef = useRef<string>('')
-  const [pendingUserMessage, setPendingUserMessage] = useState<string | undefined>(undefined)
-  const inputAreaRef = useRef<HTMLDivElement>(null)
-  const [inputHeight, setInputHeight] = useState(120)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   const activeChat = chats.find(chat => chat.chatId === activeChatId)
-
-  const {
-    append,
-    status,
-    messages: sdkMessages,
-    setInput
-  } = useChat({
-    id: activeChatId || undefined,
-    onFinish: (finalMessage: any) => {
-      if (activeChatId && userMessageRef.current) {
-        const newMessage: Message = {
-          chatId: activeChatId,
-          messageId: finalMessage.id,
-          content: {
-            user: userMessageRef.current,
-            ai: finalMessage.content
-          }
-        }
-        const updatedMessages = [...(activeChat?.messages || []), newMessage]
-        updateChatMessages(activeChatId, updatedMessages)
-        userMessageRef.current = ''
-        setPendingUserMessage(undefined)
-      }
-    },
-  })
-
-  // Memoized onSend handler for ChatInputArea
-  const onSend = useCallback((input: string) => {
-    if (!input.trim()) return
-    userMessageRef.current = input || ''
-    setPendingUserMessage(input)
-    append({ role: 'user', content: input })
-  }, [append])
-
-
 
   // Flatten messages for rendering
   const flatMessages = (activeChat?.messages || []).flatMap(msg => [
@@ -135,7 +111,7 @@ export default function ChatPage() {
       if (scrollContainer) {
         const { scrollTop, scrollHeight, clientHeight } = scrollContainer
         const isNearBottom = scrollHeight - scrollTop - clientHeight < 100
-        setShowScrollButton(!isNearBottom)
+        // setShowScrollButton(!isNearBottom) // This state is removed
       }
     }
     
@@ -148,14 +124,14 @@ export default function ChatPage() {
 
   // Dynamically measure input area height
   useLayoutEffect(() => {
-    function updateInputHeight() {
-      if (inputAreaRef.current) {
-        setInputHeight(inputAreaRef.current.offsetHeight)
-      }
-    }
-    updateInputHeight()
-    window.addEventListener('resize', updateInputHeight)
-    return () => window.removeEventListener('resize', updateInputHeight)
+    // function updateInputHeight() { // This function is removed
+    //   if (inputAreaRef.current) {
+    //     setInputHeight(inputAreaRef.current.offsetHeight)
+    //   }
+    // }
+    // updateInputHeight()
+    // window.addEventListener('resize', updateInputHeight)
+    // return () => window.removeEventListener('resize', updateInputHeight)
   }, [])
 
   const scrollToBottom = () => {
@@ -213,7 +189,7 @@ export default function ChatPage() {
                 key={message.id} 
                 message={message} 
                 status={status} 
-                copyToClipboard={memoizedCopyToClipboard}
+                copyToClipboard={memoizedCopyToClipboard} 
                 data-message-id={message.id}
               />
             ))}
@@ -223,18 +199,7 @@ export default function ChatPage() {
           </div>
         )}
       </div>
-      {/* Input Area */}
-      <ChatInputArea
-        onSend={onSend}
-        status={status}
-        selectedModel={selectedModel}
-        setSelectedModel={setSelectedModel}
-        webSearchEnabled={webSearchEnabled}
-        setWebSearchEnabled={setWebSearchEnabled}
-        showScrollButton={showScrollButton}
-        scrollToBottom={scrollToBottom}
-        inputAreaRef={inputAreaRef}
-      />
+      {/* Remove ChatInputArea here */}
     </div>
   )
 }

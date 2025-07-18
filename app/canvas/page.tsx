@@ -21,6 +21,7 @@ import CustomNode from './customNode';
 import CustomEdge from './CustomEdge';
 import React from 'react';
 import { useCanvasStore } from '../store/canvasStore';
+import { useReactFlow } from '@xyflow/react';
 
 type MenuState = {
   id: string;
@@ -37,8 +38,8 @@ const edgeTypes = {
 };
 
 const initialNodes: Node[] = [
-  { id: 'n1', type: 'custom', position: { x: 0, y: 0 }, data: { label: 'Node 1' } },
-  { id: 'n2', type: 'custom', position: { x: 0, y: 100 }, data: { label: 'Node 2' } },
+  { id: 'n1', type: 'custom', position: { x: 0, y: 0 }, data: { subtitle: 'Node 1' } },
+  { id: 'n2', type: 'custom', position: { x: 0, y: 100 }, data: { subtitle: 'Node 2' } },
 ];
 const initialEdges: Edge[] = [{ id: 'n1-n2', source: 'n1', target: 'n2', type: 'default' }];
 
@@ -58,6 +59,8 @@ function CanvasInner() {
   const [menu, setMenu] = useState<MenuState>(null);
   const ref = useRef<HTMLDivElement>(null);
   const { theme } = useTheme();
+
+  const reactFlowInstance = useReactFlow();
 
   // Sync Zustand on any change
   React.useEffect(() => {
@@ -95,7 +98,7 @@ function CanvasInner() {
 
 
   return (
-    <div style={{ width: '100%', height: '100%' }}>
+    <div style={{ width: '100%', height: '100%' }} ref={ref}>
       <div className="absolute z-20 top-4 left-4">
         {/* <CanvasDropdown /> */}
       </div>
@@ -113,12 +116,27 @@ function CanvasInner() {
         snapToGrid
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
+        onDrop={event => {
+          event.preventDefault();
+          const text = event.dataTransfer.getData('text/plain');
+          if (!text) return;
+          const position = reactFlowInstance.screenToFlowPosition({
+            x: event.clientX,
+            y: event.clientY,
+          });
+          setNodes(nds => nds.concat({
+            id: `dnd_${Date.now()}`,
+            type: 'custom',
+            position,
+            data: { subtitle: text },
+          }));
+        }}
+        onDragOver={event => event.preventDefault()}
       >
-        {/* <MiniMap /> */}
-        <Controls />
+        <MiniMap />
+        <Controls position="top-left" />
         <Background />
       </ReactFlow>
-      
     </div>
   );
 }

@@ -22,6 +22,14 @@ interface ChatState {
   unpinChat: (chatId: string) => void;
   setSearch: (search: string) => void;
   updateChatMessages: (chatId: string, messages: Message[]) => void;
+  canvasEnabled: boolean;
+  setCanvasEnabled: (v: boolean) => void;
+  chatEnabled: boolean;
+  setChatEnabled: (v: boolean) => void;
+  flipLayout: boolean;
+  setFlipLayout: (v: boolean) => void;
+  webSearchEnabled: boolean;
+  setWebSearchEnabled: (v: boolean) => void;
 }
 
 export const useChatStore = create<ChatState>()(
@@ -31,6 +39,14 @@ export const useChatStore = create<ChatState>()(
       activeChatId: null,
       pinned: {},
       search: '',
+      canvasEnabled: true,
+      setCanvasEnabled: (v: boolean) => set({ canvasEnabled: v }),
+      chatEnabled: true,
+      setChatEnabled: (v: boolean) => set({ chatEnabled: v }),
+      flipLayout: false,
+      setFlipLayout: (v: boolean) => set({ flipLayout: v }),
+      webSearchEnabled: false,
+      setWebSearchEnabled: (v: boolean) => set({ webSearchEnabled: v }),
       addChat: (chat: Chat) => set((state) => {
         const newChats = [chat, ...state.chats];
         console.log('[addChat] chats:', newChats);
@@ -87,6 +103,10 @@ export const useChatStore = create<ChatState>()(
         activeChatId: state.activeChatId,
         pinned: state.pinned,
         search: state.search,
+        canvasEnabled: state.canvasEnabled,
+        chatEnabled: state.chatEnabled,
+        flipLayout: state.flipLayout,
+        webSearchEnabled: state.webSearchEnabled,
       }),
     }
   )

@@ -16,6 +16,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useDuplicateNode, useDeleteNode, useAddNode } from './nodeActions';
 import { Move } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
 
 export default function CustomNode({ id, data, isConnectable }: NodeProps) {
   const duplicateNode = useDuplicateNode();
@@ -43,15 +44,25 @@ export default function CustomNode({ id, data, isConnectable }: NodeProps) {
     <ContextMenu>
       <ContextMenuTrigger asChild>
         <div
-          className="relative rounded bg-card border p-2 min-w-[120px] text-center shadow w-full h-full"
+          className="relative rounded bg-card border p-2 min-w-[80px] text-center shadow w-full h-full"
         >
           <Handle
             type="target"
             position={Position.Top}
             isConnectable={isConnectable}
           />
-          <div>
-            {String(data.label)}
+          <div
+            className="whitespace-pre-wrap overflow-hidden w-full h-full"
+            style={{
+              fontSize: '7px',
+              lineHeight: 1.3,
+              fontWeight: 500,
+              letterSpacing: 0.1,
+              wordBreak: 'break-word',
+              overflowWrap: 'break-word',
+            }}
+          >
+          {String(data.subtitle)}
           </div>
           <Handle
             type="source"

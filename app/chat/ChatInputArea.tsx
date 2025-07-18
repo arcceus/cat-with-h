@@ -4,35 +4,38 @@ import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuIte
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { Search, Paperclip, ChevronDown, ChevronUp } from 'lucide-react'
 import type { RefObject } from 'react'
+import { Switch } from '@/components/ui/switch'
 
 interface ChatInputAreaProps {
   onSend: (input: string) => void,
   status: string,
-  selectedModel: any,
-  setSelectedModel: (model: any) => void,
   webSearchEnabled: boolean,
   setWebSearchEnabled: (v: boolean) => void,
   showScrollButton: boolean,
   scrollToBottom: () => void,
   inputAreaRef: RefObject<HTMLDivElement | null>,
-  AI_MODELS?: any[]
+  canvasEnabled: boolean,
+  setCanvasEnabled: (v: boolean) => void,
+  chatEnabled: boolean,
+  setChatEnabled: (v: boolean) => void,
+  flipLayout: boolean,
+  setFlipLayout: (v: boolean) => void,
 }
 
 const ChatInputArea: React.FC<ChatInputAreaProps> = ({
   onSend,
   status,
-  selectedModel,
-  setSelectedModel,
   webSearchEnabled,
   setWebSearchEnabled,
   showScrollButton,
   scrollToBottom,
   inputAreaRef,
-  AI_MODELS = [
-    { id: 'gpt-4', name: 'GPT-4', icon: ChevronUp, description: 'Most capable model' },
-    { id: 'gpt-3.5-turbo', name: 'GPT-3.5 Turbo', icon: ChevronUp, description: 'Fast and efficient' },
-    { id: 'claude-3', name: 'Claude 3', icon: ChevronUp, description: 'Anthropic\'s latest' },
-  ],
+  canvasEnabled,
+  setCanvasEnabled,
+  chatEnabled,
+  setChatEnabled,
+  flipLayout,
+  setFlipLayout,
 }) => {
   const [input, setInput] = useState('')
   const textareaRef = useRef<HTMLTextAreaElement>(null)
@@ -73,33 +76,24 @@ const ChatInputArea: React.FC<ChatInputAreaProps> = ({
                 color: 'inherit'
               }}
             />
-            {/* Controls row below input: model, web, attach left; send right */}
+            {/* Controls row below input: toggles, model, web, attach left; send right */}
             <div className="flex items-center justify-between mt-2">
+              <div className="flex items-center gap-3">
+                {/* Toggles for Canvas, Chat, Flip Layout */}
+                <div className="flex items-center gap-2">
+                  <Switch id="canvas-toggle" checked={canvasEnabled} onCheckedChange={setCanvasEnabled} />
+                  <label htmlFor="canvas-toggle" className="text-xs text-muted-foreground">Canvas</label>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Switch id="chat-toggle" checked={chatEnabled} onCheckedChange={setChatEnabled} />
+                  <label htmlFor="chat-toggle" className="text-xs text-muted-foreground">Chat</label>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Switch id="flip-toggle" checked={flipLayout} onCheckedChange={setFlipLayout} />
+                  <label htmlFor="flip-toggle" className="text-xs text-muted-foreground">Flip UI</label>
+                </div>
+              </div>
               <div className="flex items-center gap-1">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="sm" className="h-8 gap-2 text-muted-foreground hover:text-foreground">
-                      <selectedModel.icon className="h-3 w-3" />
-                      {selectedModel.name}
-                      <ChevronDown className="h-3 w-3" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="start" className="w-48">
-                    {AI_MODELS.map((model) => (
-                      <DropdownMenuItem
-                        key={model.id}
-                        onClick={() => setSelectedModel(model)}
-                        className="flex items-center gap-2"
-                      >
-                        <model.icon className="h-3 w-3" />
-                        <div className="flex flex-col">
-                          <span className="text-sm font-medium">{model.name}</span>
-                          <span className="text-xs text-muted-foreground">{model.description}</span>
-                        </div>
-                      </DropdownMenuItem>
-                    ))}
-                  </DropdownMenuContent>
-                </DropdownMenu>
                 <Button
                   type="button"
                   variant={webSearchEnabled ? "secondary" : "ghost"}
