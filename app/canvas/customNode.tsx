@@ -16,7 +16,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useDuplicateNode, useDeleteNode, useAddNode } from './nodeActions';
 import { Move } from 'lucide-react';
-import ReactMarkdown from 'react-markdown';
+import DOMPurify from 'dompurify';
 
 export default function CustomNode({ id, data, isConnectable }: NodeProps) {
   const duplicateNode = useDuplicateNode();
@@ -51,19 +51,32 @@ export default function CustomNode({ id, data, isConnectable }: NodeProps) {
             position={Position.Top}
             isConnectable={isConnectable}
           />
-          <div
-            className="whitespace-pre-wrap overflow-hidden w-full h-full"
-            style={{
-              fontSize: '7px',
-              lineHeight: 1.3,
-              fontWeight: 500,
-              letterSpacing: 0.1,
-              wordBreak: 'break-word',
-              overflowWrap: 'break-word',
-            }}
-          >
-          {String(data.subtitle)}
-          </div>
+          {data.html ? (
+            <div
+              className="custom-node-content whitespace-pre-wrap overflow-hidden h-full text-left"
+              style={{
+                fontSize: '6px',
+                lineHeight: 1.325,
+                fontWeight: 400,
+                wordBreak: 'break-word',
+                overflowWrap: 'break-word',
+              }}
+              dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(data.html) }}
+            />
+          ) : (
+            <div
+              className="custom-node-content whitespace-pre-wrap overflow-hidden h-full text-left"
+              style={{
+                fontSize: '6px',
+                lineHeight: 1.325,
+                fontWeight: 400,
+                wordBreak: 'break-word',
+                overflowWrap: 'break-word',
+              }}
+            >
+              {String(data.subtitle)}
+            </div>
+          )}
           <Handle
             type="source"
             position={Position.Bottom}

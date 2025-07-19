@@ -1,6 +1,5 @@
 import React, { useState, useRef } from 'react'
 import { Button } from '@/components/ui/button'
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { Search, Paperclip, ChevronDown, ChevronUp } from 'lucide-react'
 import type { RefObject } from 'react'

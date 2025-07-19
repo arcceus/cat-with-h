@@ -2,7 +2,6 @@ import React from 'react'
 import { motion } from 'framer-motion'
 import ReactMarkdown from 'react-markdown'
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
-import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Copy, RotateCcw, WrapText, FileText } from 'lucide-react'
@@ -96,7 +95,7 @@ const ChatMessage = React.memo(function ChatMessage({
   const isStreaming = status === 'streaming' && message.id === 'pending-ai'
 
   return (
-    <div className="w-full max-w-4xl mx-auto">
+    <div className="w-full max-w-3xl mx-auto">
       <motion.div
         key={message.id}
         initial={{ opacity: 0, y: 10 }}
@@ -146,7 +145,7 @@ const ChatMessage = React.memo(function ChatMessage({
                   h2: ({ children }: any) => <h2 className="text-xl font-semibold mb-2 mt-5 text-foreground">{children}</h2>,
                   h3: ({ children }: any) => <h3 className="text-lg font-semibold mb-2 mt-4 text-foreground">{children}</h3>,
                   ul: ({ children }: any) => (
-                    <ul className="list-none mb-4 pl-6 space-y-2 text-base text-foreground">
+                    <ul className="mb-4 pl-6 space-y-2 text-base text-foreground">
                       {React.Children.toArray(children)
                         .filter(child => {
                           if (typeof child === 'string') return child.trim() !== '';
@@ -177,7 +176,7 @@ const ChatMessage = React.memo(function ChatMessage({
                     </ul>
                   ),
                   ol: ({ children }: any) => (
-                    <ol className="list-none mb-4 pl-6 space-y-2 text-base text-foreground">
+                    <ol className="mb-4 pl-6 space-y-2 text-base text-foreground">
                       {React.Children.toArray(children)
                         .filter(child => {
                           if (typeof child === 'string') return child.trim() !== '';

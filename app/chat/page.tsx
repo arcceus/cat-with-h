@@ -1,6 +1,5 @@
 "use client"
 
-import { useChat } from '@ai-sdk/react'
 import { useChatStore } from '../store/chatStore'
 import { 
   Bot,
@@ -8,7 +7,7 @@ import {
   Zap,
   Brain
 } from 'lucide-react'
-import { useState, useRef, useEffect, useLayoutEffect } from 'react'
+import { useRef, useEffect, useLayoutEffect } from 'react'
 import type { Message } from '../types'
 import React, { useCallback } from 'react'
 import ChatMessage from './ChatMessage'

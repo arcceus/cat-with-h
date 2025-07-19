@@ -43,6 +43,11 @@ const initialNodes: Node[] = [
 ];
 const initialEdges: Edge[] = [{ id: 'n1-n2', source: 'n1', target: 'n2', type: 'default' }];
 
+// Utility to extract HTML from a DOM element by id
+function getHtmlFromElementById(id: string): string | null {
+  const el = document.getElementById(id);
+  return el ? el.innerHTML : null;
+}
 
 export default function Canvas() {
   return (
@@ -119,7 +124,8 @@ function CanvasInner() {
         onDrop={event => {
           event.preventDefault();
           const text = event.dataTransfer.getData('text/plain');
-          if (!text) return;
+          const html = event.dataTransfer.getData('text/html');
+          if (!text && !html) return;
           const position = reactFlowInstance.screenToFlowPosition({
             x: event.clientX,
             y: event.clientY,
@@ -128,7 +134,7 @@ function CanvasInner() {
             id: `dnd_${Date.now()}`,
             type: 'custom',
             position,
-            data: { subtitle: text },
+            data: html ? { html } : { subtitle: text },
           }));
         }}
         onDragOver={event => event.preventDefault()}
