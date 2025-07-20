@@ -42,7 +42,8 @@ export default function ChatPage({
   status,
   pendingUserMessage,
   sdkMessages,
-  setPendingUserMessage
+  setPendingUserMessage,
+  selectionMode = false
 }: {
   canvasEnabled: boolean,
   setCanvasEnabled: (v: boolean) => void,
@@ -53,9 +54,10 @@ export default function ChatPage({
   status: string,
   pendingUserMessage: string | undefined,
   sdkMessages: any[],
-  setPendingUserMessage: (v: string | undefined) => void
+  setPendingUserMessage: (v: string | undefined) => void,
+  selectionMode?: boolean
 }) {
-  const { activeChatId, chats } = useChatStore()
+  const { activeChatId, chats, setActiveChat } = useChatStore()
   // const [selectedModel, setSelectedModel] = useState(AI_MODELS[0])
   // const [webSearchEnabled, setWebSearchEnabled] = useState(false)
   const userMessageRef = useRef<string>('')
@@ -120,6 +122,22 @@ export default function ChatPage({
       return () => scrollContainer.removeEventListener('scroll', handleScroll)
     }
   }, [])
+
+  // Listen for scroll-to-chat-message event
+  useEffect(() => {
+    function handler(e: any) {
+      const { chatId, messageId } = e.detail;
+      if (chatId && setActiveChat) setActiveChat(chatId);
+      setTimeout(() => {
+        const el = document.querySelector(`[data-message-id='${messageId}']`);
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 200); // Adjust delay as needed
+    }
+    window.addEventListener('scroll-to-chat-message', handler);
+    return () => window.removeEventListener('scroll-to-chat-message', handler);
+  }, [setActiveChat]);
 
   // Dynamically measure input area height
   useLayoutEffect(() => {
@@ -190,6 +208,9 @@ export default function ChatPage({
                 status={status} 
                 copyToClipboard={memoizedCopyToClipboard} 
                 data-message-id={message.id}
+                selectionMode={selectionMode}
+                chatId={activeChatId}
+                messageId={message.id}
               />
             ))}
             {/* Empty space at bottom for better UX */}

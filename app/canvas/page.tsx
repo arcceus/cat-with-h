@@ -30,7 +30,7 @@ type MenuState = {
 } | null;
 
 const nodeTypes: NodeTypes = {
-  custom: CustomNode,
+  custom: CustomNode
 };
 
 const edgeTypes = {
@@ -124,8 +124,9 @@ function CanvasInner() {
         onDrop={event => {
           event.preventDefault();
           const text = event.dataTransfer.getData('text/plain');
-          const html = event.dataTransfer.getData('text/html');
-          if (!text && !html) return;
+          const chatId = event.dataTransfer.getData('application/x-chat-id');
+          const messageId = event.dataTransfer.getData('application/x-message-id');
+          if (!text) return;
           const position = reactFlowInstance.screenToFlowPosition({
             x: event.clientX,
             y: event.clientY,
@@ -134,7 +135,7 @@ function CanvasInner() {
             id: `dnd_${Date.now()}`,
             type: 'custom',
             position,
-            data: html ? { html } : { subtitle: text },
+            data: { subtitle: text, chatId, messageId },
           }));
         }}
         onDragOver={event => event.preventDefault()}

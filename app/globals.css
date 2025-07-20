@@ -383,7 +383,7 @@
 .codeblock-markdown .token.char,
 .codeblock-markdown .token.builtin,
 .codeblock-markdown .token.inserted {
-  color: #b4d273 !important;
+  color: #cbe591 !important;
 }
 .codeblock-markdown .token.operator,
 .codeblock-markdown .token.entity,
@@ -398,7 +398,7 @@
   color: #6cb6eb !important;
 }
 .codeblock-markdown .token.keyword {
-  color: #e586e7 !important;
+  color: #e786b8 !important;
 }
 .codeblock-markdown .token.regex,
 .codeblock-markdown .token.important {
@@ -412,7 +412,7 @@
 }
 
 /* Fix: allow selection of list markers and list items in chat markdown */
-.chat-message ul,
+/* .chat-message ul,
 .chat-message ol,
 .chat-message li {
   user-select: text;
@@ -422,7 +422,7 @@
 .chat-message ol ::marker {
   user-select: text;
   -webkit-user-select: text;
-}
+} */
 
 /* .custom-node-content ul {
   list-style-type: none;
@@ -435,4 +435,399 @@
   padding-left: 1.5em;
   margin-left: 0;
 } */
+
+/* Tiptap Editor Styles */
+.tiptap-content {
+  font-family: var(--font-sans);
+  color: var(--foreground);
+  background: transparent;
+}
+
+.tiptap-content .ProseMirror {
+  font-family: var(--font-sans);
+  color: var(--foreground);
+  background: transparent;
+  padding: 0;
+  margin: 0;
+  outline: none;
+}
+
+.tiptap-content .ProseMirror h1,
+.tiptap-content .ProseMirror h2,
+.tiptap-content .ProseMirror h3,
+.tiptap-content .ProseMirror h4,
+.tiptap-content .ProseMirror h5,
+.tiptap-content .ProseMirror h6 {
+  color: var(--foreground);
+  font-weight: 600;
+  margin: 1rem 0 0.5rem 0;
+  line-height: 1.4;
+}
+
+.tiptap-content .ProseMirror h1 {
+  font-size: 1.5rem;
+}
+
+.tiptap-content .ProseMirror h2 {
+  font-size: 1.25rem;
+}
+
+.tiptap-content .ProseMirror h3 {
+  font-size: 1.125rem;
+}
+
+.tiptap-content .ProseMirror p {
+  color: var(--foreground);
+  margin: 0.5rem 0;
+  line-height: 1.6;
+}
+
+.tiptap-content .ProseMirror ul,
+.tiptap-content .ProseMirror ol {
+  color: var(--foreground);
+  margin: 0.5rem 0;
+  padding-left: 1.5rem;
+  list-style: inherit;
+}
+
+.tiptap-content .ProseMirror ul {
+  list-style-type: disc;
+}
+
+.tiptap-content .ProseMirror ol {
+  list-style-type: decimal;
+}
+
+.tiptap-content .ProseMirror li {
+  color: var(--foreground);
+  margin: 0.25rem 0;
+  line-height: 1.5;
+  display: list-item;
+  list-style-position: outside;
+}
+
+.tiptap-content .ProseMirror ul li {
+  list-style-type: disc;
+}
+
+.tiptap-content .ProseMirror ol li {
+  list-style-type: decimal;
+}
+
+.tiptap-content .ProseMirror blockquote {
+  border-left: 3px solid var(--primary);
+  padding-left: 1rem;
+  margin: 1rem 0;
+  color: var(--muted-foreground);
+  font-style: italic;
+}
+
+.tiptap-content .ProseMirror code {
+  background: var(--muted);
+  color: var(--foreground);
+  padding: 0.125rem 0.25rem;
+  border-radius: 0.25rem;
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+}
+
+.tiptap-content .ProseMirror pre {
+  background: var(--muted);
+  color: var(--foreground);
+  padding: 1rem;
+  border-radius: 0.5rem;
+  overflow-x: auto;
+  margin: 1rem 0;
+  border: 1px solid var(--border);
+}
+
+.tiptap-content .ProseMirror pre code {
+  background: transparent;
+  padding: 0;
+  border-radius: 0;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.tiptap-content .ProseMirror table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 1rem 0;
+  border: 1px solid var(--border);
+}
+
+.tiptap-content .ProseMirror th,
+.tiptap-content .ProseMirror td {
+  border: 1px solid var(--border);
+  padding: 0.5rem;
+  text-align: left;
+}
+
+.tiptap-content .ProseMirror th {
+  background: var(--muted);
+  font-weight: 600;
+}
+
+.tiptap-content .ProseMirror a {
+  color: var(--primary);
+  text-decoration: underline;
+}
+
+.tiptap-content .ProseMirror a:hover {
+  color: var(--primary);
+  text-decoration: none;
+}
+
+.tiptap-content .ProseMirror strong {
+  font-weight: 600;
+}
+
+.tiptap-content .ProseMirror em {
+  font-style: italic;
+}
+
+.tiptap-content .ProseMirror hr {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 1.5rem 0;
+}
+
+/* Force list markers to be visible */
+.tiptap-content .ProseMirror ul li::marker {
+  color: var(--foreground);
+  font-weight: normal;
+}
+
+.tiptap-content .ProseMirror ol li::marker {
+  color: var(--foreground);
+  font-weight: normal;
+}
+
+/* Ensure list items have proper spacing */
+.tiptap-content .ProseMirror li {
+  margin-bottom: 0.25rem;
+}
+
+/* Override any potential list-style: none */
+.tiptap-content .ProseMirror ul,
+.tiptap-content .ProseMirror ol {
+  list-style: revert !important;
+}
+
+.tiptap-content .ProseMirror ul li,
+.tiptap-content .ProseMirror ol li {
+  list-style: revert !important;
+}
+
+/* Dark theme adjustments */
+.dark .tiptap-content .ProseMirror {
+  color: var(--foreground);
+}
+
+.dark .tiptap-content .ProseMirror pre {
+  background: var(--card);
+  border-color: var(--border);
+}
+
+.dark .tiptap-content .ProseMirror code {
+  background: var(--muted);
+  color: var(--foreground);
+}
+
+/* Toast UI Editor Viewer Styles */
+.toastui-editor-viewer-container {
+  font-family: var(--font-sans);
+  color: var(--foreground);
+  background: transparent;
+}
+
+.toastui-editor-viewer-container .toastui-editor-contents {
+  font-family: var(--font-sans);
+  color: var(--foreground);
+  background: transparent;
+  padding: 0;
+  margin: 0;
+}
+
+.toastui-editor-viewer-container .toastui-editor-contents h1,
+.toastui-editor-viewer-container .toastui-editor-contents h2,
+.toastui-editor-viewer-container .toastui-editor-contents h3,
+.toastui-editor-viewer-container .toastui-editor-contents h4,
+.toastui-editor-viewer-container .toastui-editor-contents h5,
+.toastui-editor-viewer-container .toastui-editor-contents h6 {
+  color: var(--foreground);
+  font-weight: 600;
+  margin: 1rem 0 0.5rem 0;
+  line-height: 1.4;
+}
+
+.toastui-editor-viewer-container .toastui-editor-contents h1 {
+  font-size: 1.5rem;
+}
+
+.toastui-editor-viewer-container .toastui-editor-contents h2 {
+  font-size: 1.25rem;
+}
+
+.toastui-editor-viewer-container .toastui-editor-contents h3 {
+  font-size: 1.125rem;
+}
+
+.toastui-editor-viewer-container .toastui-editor-contents p {
+  color: var(--foreground);
+  margin: 0.5rem 0;
+  line-height: 1.6;
+}
+
+.toastui-editor-viewer-container .toastui-editor-contents ul,
+.toastui-editor-viewer-container .toastui-editor-contents ol {
+  color: var(--foreground);
+  margin: 0.5rem 0;
+  padding-left: 1.5rem;
+  list-style: inherit;
+}
+
+.toastui-editor-viewer-container .toastui-editor-contents ul {
+  list-style-type: disc;
+}
+
+.toastui-editor-viewer-container .toastui-editor-contents ol {
+  list-style-type: decimal;
+}
+
+.toastui-editor-viewer-container .toastui-editor-contents li {
+  color: var(--foreground);
+  margin: 0.25rem 0;
+  line-height: 1.5;
+  display: list-item;
+  list-style-position: outside;
+}
+
+.toastui-editor-viewer-container .toastui-editor-contents ul li {
+  list-style-type: disc;
+}
+
+.toastui-editor-viewer-container .toastui-editor-contents ol li {
+  list-style-type: decimal;
+}
+
+/* Force list markers to be visible */
+.toastui-editor-viewer-container .toastui-editor-contents ul li::marker {
+  color: var(--foreground);
+  font-weight: normal;
+}
+
+.toastui-editor-viewer-container .toastui-editor-contents ol li::marker {
+  color: var(--foreground);
+  font-weight: normal;
+}
+
+/* Ensure list items have proper spacing */
+.toastui-editor-viewer-container .toastui-editor-contents li {
+  margin-bottom: 0.25rem;
+}
+
+/* Override any potential list-style: none */
+.toastui-editor-viewer-container .toastui-editor-contents ul,
+.toastui-editor-viewer-container .toastui-editor-contents ol {
+  list-style: revert !important;
+}
+
+.toastui-editor-viewer-container .toastui-editor-contents ul li,
+.toastui-editor-viewer-container .toastui-editor-contents ol li {
+  list-style: revert !important;
+}
+
+.toastui-editor-viewer-container .toastui-editor-contents blockquote {
+  border-left: 3px solid var(--primary);
+  padding-left: 1rem;
+  margin: 1rem 0;
+  color: var(--muted-foreground);
+  font-style: italic;
+}
+
+.toastui-editor-viewer-container .toastui-editor-contents code {
+  background: var(--muted);
+  color: var(--foreground);
+  padding: 0.125rem 0.25rem;
+  border-radius: 0.25rem;
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+}
+
+.toastui-editor-viewer-container .toastui-editor-contents pre {
+  background: var(--muted);
+  color: var(--foreground);
+  padding: 1rem;
+  border-radius: 0.5rem;
+  overflow-x: auto;
+  margin: 1rem 0;
+  border: 1px solid var(--border);
+}
+
+.toastui-editor-viewer-container .toastui-editor-contents pre code {
+  background: transparent;
+  padding: 0;
+  border-radius: 0;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.toastui-editor-viewer-container .toastui-editor-contents table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 1rem 0;
+  border: 1px solid var(--border);
+}
+
+.toastui-editor-viewer-container .toastui-editor-contents th,
+.toastui-editor-viewer-container .toastui-editor-contents td {
+  border: 1px solid var(--border);
+  padding: 0.5rem;
+  text-align: left;
+}
+
+.toastui-editor-viewer-container .toastui-editor-contents th {
+  background: var(--muted);
+  font-weight: 600;
+}
+
+.toastui-editor-viewer-container .toastui-editor-contents a {
+  color: var(--primary);
+  text-decoration: underline;
+}
+
+.toastui-editor-viewer-container .toastui-editor-contents a:hover {
+  color: var(--primary);
+  text-decoration: none;
+}
+
+.toastui-editor-viewer-container .toastui-editor-contents strong {
+  font-weight: 600;
+}
+
+.toastui-editor-viewer-container .toastui-editor-contents em {
+  font-style: italic;
+}
+
+.toastui-editor-viewer-container .toastui-editor-contents hr {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 1.5rem 0;
+}
+
+/* Dark theme adjustments */
+.dark .toastui-editor-viewer-container .toastui-editor-contents {
+  color: var(--foreground);
+}
+
+.dark .toastui-editor-viewer-container .toastui-editor-contents pre {
+  background: var(--card);
+  border-color: var(--border);
+}
+
+.dark .toastui-editor-viewer-container .toastui-editor-contents code {
+  background: var(--muted);
+  color: var(--foreground);
+}
 

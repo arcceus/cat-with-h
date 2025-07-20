@@ -16,7 +16,7 @@ import { useChatStore } from "@/app/store/chatStore";
 import { Plus } from "lucide-react";
 import { useSidebar } from "@/components/ui/sidebar";
 import ChatPage from "../chat/page";
-import { useState, useRef, useCallback } from 'react'
+import { useState, useRef, useCallback, useEffect } from 'react'
 import ChatInputArea from '../chat/ChatInputArea'
 import { useChat } from '@ai-sdk/react'
 import type { Message } from '../types'
@@ -46,6 +46,19 @@ export default function Workspace() {
   const { addChat, chats, canvasEnabled, setCanvasEnabled, chatEnabled, setChatEnabled, flipLayout, setFlipLayout, webSearchEnabled, setWebSearchEnabled, activeChatId, updateChatMessages } = useChatStore();
   const [showScrollButton, setShowScrollButton] = useState(false)
   const inputAreaRef = useRef<HTMLDivElement>(null)
+
+  // Selection mode state and key listener
+  const [selectionMode, setSelectionMode] = useState(false);
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.ctrlKey && e.key === 'm') {
+        setSelectionMode((prev) => !prev);
+        e.preventDefault();
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, []);
 
   // Chat logic lifted from ChatPage
   const userMessageRef = useRef<string>('')
@@ -136,6 +149,7 @@ export default function Workspace() {
                         pendingUserMessage={pendingUserMessage}
                         sdkMessages={sdkMessages}
                         setPendingUserMessage={setPendingUserMessage}
+                        selectionMode={selectionMode}
                       />
                     </div>
                   </div>
@@ -177,7 +191,9 @@ export default function Workspace() {
                           flipLayout={flipLayout}
                           setFlipLayout={setFlipLayout} status={""} pendingUserMessage={undefined} sdkMessages={[]} setPendingUserMessage={function (v: string | undefined): void {
                             throw new Error("Function not implemented.");
-                          } }                      />
+                          } }
+                          selectionMode={selectionMode}
+                        />
                       </div>
                     </div>
                   </ResizablePanel>

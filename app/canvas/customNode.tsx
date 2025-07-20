@@ -17,6 +17,7 @@ import { Button } from '@/components/ui/button';
 import { useDuplicateNode, useDeleteNode, useAddNode } from './nodeActions';
 import { Move } from 'lucide-react';
 import DOMPurify from 'dompurify';
+import { MarkdownRenderer } from '../chat/markdown-renderer';
 
 export default function CustomNode({ id, data, isConnectable }: NodeProps) {
   const duplicateNode = useDuplicateNode();
@@ -45,6 +46,13 @@ export default function CustomNode({ id, data, isConnectable }: NodeProps) {
       <ContextMenuTrigger asChild>
         <div
           className="relative rounded bg-card border p-2 min-w-[80px] text-center shadow w-full h-full"
+          onDoubleClick={() => {
+            if (data.chatId && data.messageId) {
+              window.dispatchEvent(new CustomEvent('scroll-to-chat-message', {
+                detail: { chatId: data.chatId, messageId: data.messageId }
+              }));
+            }
+          }}
         >
           <Handle
             type="target"
@@ -61,8 +69,16 @@ export default function CustomNode({ id, data, isConnectable }: NodeProps) {
                 wordBreak: 'break-word',
                 overflowWrap: 'break-word',
               }}
-              dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(data.html) }}
-            />
+            >
+              {typeof data.chatId === 'string' ? (
+                <div style={{ fontWeight: 600, fontSize: '7px', marginBottom: 2 }}>From: {data.chatId}</div>
+              ) : null}
+              <MarkdownRenderer
+                content={String(data.html)}
+                status="ready"
+                copyToClipboard={() => {}}
+              />
+            </div>
           ) : (
             <div
               className="custom-node-content whitespace-pre-wrap overflow-hidden h-full text-left"
@@ -74,7 +90,14 @@ export default function CustomNode({ id, data, isConnectable }: NodeProps) {
                 overflowWrap: 'break-word',
               }}
             >
-              {String(data.subtitle)}
+              {typeof data.chatId === 'string' ? (
+                <div style={{ fontWeight: 600, fontSize: '7px', marginBottom: 2 }}>From: {data.chatId}</div>
+              ) : null}
+              <MarkdownRenderer
+                content={String(data.subtitle)}
+                status="ready"
+                copyToClipboard={() => {}}
+              />
             </div>
           )}
           <Handle
