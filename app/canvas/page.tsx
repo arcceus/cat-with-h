@@ -135,7 +135,7 @@ function CanvasInner() {
             id: `dnd_${Date.now()}`,
             type: 'custom',
             position,
-            data: { subtitle: text, chatId, messageId },
+            data: { content: text, chatId, messageId },
           }));
         }}
         onDragOver={event => event.preventDefault()}

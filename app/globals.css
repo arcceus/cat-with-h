@@ -342,7 +342,11 @@
   transition: background 0.2s, color 0.2s !important;
 }
 
-.codeblock-markdown pre, .codeblock-markdown code, .codeblock-markdown .syntaxhighlighter, .codeblock-markdown .hljs, .codeblock-markdown span {
+.codeblock-markdown pre,
+.codeblock-markdown code,
+.codeblock-markdown .syntaxhighlighter,
+.codeblock-markdown .hljs,
+.codeblock-markdown span:not(.md-inline) {
   background: transparent !important;
   border: none !important;
   box-shadow: none !important;
@@ -695,22 +699,6 @@
   list-style-type: decimal;
 }
 
-.toastui-editor-viewer-container .toastui-editor-contents li {
-  color: var(--foreground);
-  margin: 0.25rem 0;
-  line-height: 1.5;
-  display: list-item;
-  list-style-position: outside;
-}
-
-.toastui-editor-viewer-container .toastui-editor-contents ul li {
-  list-style-type: disc;
-}
-
-.toastui-editor-viewer-container .toastui-editor-contents ol li {
-  list-style-type: decimal;
-}
-
 /* Force list markers to be visible */
 .toastui-editor-viewer-container .toastui-editor-contents ul li::marker {
   color: var(--foreground);
@@ -829,5 +817,36 @@
 .dark .toastui-editor-viewer-container .toastui-editor-contents code {
   background: var(--muted);
   color: var(--foreground);
+}
+
+.md-marker {
+  color: #b0b0b0;
+  font-family: monospace;
+  opacity: 0.7;
+}
+.md-bold {
+  font-weight: bold;
+}
+.md-italic {
+  font-style: italic;
+}
+.md-heading {
+  font-weight: bold;
+  font-size: 1.2em;
+  color: #3a3a3a;
+}
+.md-inline {
+  background: rgba(236, 236, 236, 0.7);
+  font-family: monospace;
+  padding: 0.15em 0.4em;
+  border-radius: 4px;
+  font-size: 0.97em;
+  border: 1px solid #e0e0e0;
+  color: #222;
+}
+
+.markdown-with-markers {
+  font-size: 1em;
+  line-height: 1.6;
 }
 

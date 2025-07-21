@@ -41,11 +41,13 @@ export default function CustomNode({ id, data, isConnectable }: NodeProps) {
     setDialogOpen(false);
   }, [id, addNode, newLabel]);
 
+  const content = data.content || data.html || data.subtitle || '';
+
   return (
     <ContextMenu>
       <ContextMenuTrigger asChild>
         <div
-          className="relative rounded bg-card border p-2 min-w-[80px] text-center shadow w-full h-full"
+          className="relative rounded-lg bg-background border p-4 text-left shadow w-full h-full"
           onDoubleClick={() => {
             if (data.chatId && data.messageId) {
               window.dispatchEvent(new CustomEvent('scroll-to-chat-message', {
@@ -59,47 +61,14 @@ export default function CustomNode({ id, data, isConnectable }: NodeProps) {
             position={Position.Top}
             isConnectable={isConnectable}
           />
-          {data.html ? (
-            <div
-              className="custom-node-content whitespace-pre-wrap overflow-hidden h-full text-left"
-              style={{
-                fontSize: '6px',
-                lineHeight: 1.325,
-                fontWeight: 400,
-                wordBreak: 'break-word',
-                overflowWrap: 'break-word',
-              }}
-            >
-              {typeof data.chatId === 'string' ? (
-                <div style={{ fontWeight: 600, fontSize: '7px', marginBottom: 2 }}>From: {data.chatId}</div>
-              ) : null}
-              <MarkdownRenderer
-                content={String(data.html)}
-                status="ready"
-                copyToClipboard={() => {}}
-              />
-            </div>
-          ) : (
-            <div
-              className="custom-node-content whitespace-pre-wrap overflow-hidden h-full text-left"
-              style={{
-                fontSize: '6px',
-                lineHeight: 1.325,
-                fontWeight: 400,
-                wordBreak: 'break-word',
-                overflowWrap: 'break-word',
-              }}
-            >
-              {typeof data.chatId === 'string' ? (
-                <div style={{ fontWeight: 600, fontSize: '7px', marginBottom: 2 }}>From: {data.chatId}</div>
-              ) : null}
-              <MarkdownRenderer
-                content={String(data.subtitle)}
-                status="ready"
-                copyToClipboard={() => {}}
-              />
-            </div>
-          )}
+          {typeof data.chatId === 'string' ? (
+            <div style={{ fontWeight: 600, fontSize: '10px', marginBottom: 4, color: 'var(--muted-foreground)' }}>From: {data.chatId}</div>
+          ) : null}
+          <MarkdownRenderer
+            content={String(content)}
+            status="ready"
+            copyToClipboard={() => {}}
+          />
           <Handle
             type="source"
             position={Position.Bottom}

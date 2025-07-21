@@ -1,11 +1,10 @@
 import React from 'react'
 import { motion } from 'framer-motion'
-import ReactMarkdown from 'react-markdown'
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Copy, RotateCcw } from 'lucide-react'
 import { MarkdownRenderer } from './markdown-renderer';
+import { MarkdownWithMarkers } from './MarkdownWithMarkers';
 
 const ChatMessage = React.memo(function ChatMessage({ 
   message, 
@@ -54,6 +53,10 @@ const ChatMessage = React.memo(function ChatMessage({
               : 'bg-background',
             isStreaming && 'streaming-message' // Apply streaming optimizations
           )}
+          onDragStart={(e: React.DragEvent<HTMLDivElement>) => {
+            if (chatId) e.dataTransfer.setData('application/x-chat-id', chatId);
+            if (messageId) e.dataTransfer.setData('application/x-message-id', messageId);
+          }}
         >
           {/* Drag handle at the top */}
           <div
@@ -84,18 +87,25 @@ const ChatMessage = React.memo(function ChatMessage({
           </div>
           {message.role === 'assistant' ? (
             <>
-              <MarkdownRenderer
-                content={message.content}
-                status={status}
-                copyToClipboard={copyToClipboard}
-                selectionMode={selectionMode}
-                onPreCopy={selectionMode ? (e => {
-                  e.preventDefault();
-                  if (e.clipboardData) {
-                    e.clipboardData.setData('text/plain', message.content);
-                  }
-                }) : undefined}
-              />
+              {selectionMode ? (
+                <MarkdownWithMarkers
+                  content={message.content}
+                  className="markdown-with-markers"
+                />
+              ) : (
+                <MarkdownRenderer
+                  content={message.content}
+                  status={status}
+                  copyToClipboard={copyToClipboard}
+                  selectionMode={selectionMode}
+                  onPreCopy={selectionMode ? (e => {
+                    e.preventDefault();
+                    if (e.clipboardData) {
+                      e.clipboardData.setData('text/plain', message.content);
+                    }
+                  }) : undefined}
+                />
+              )}
               {/* Typing indicator for streaming */}
               {isStreaming && (
                 <div className="flex items-center gap-1 mt-2">

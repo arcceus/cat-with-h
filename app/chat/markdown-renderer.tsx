@@ -115,66 +115,8 @@ export function MarkdownRenderer({ content, status, copyToClipboard, selectionMo
           h1: ({ children }: any) => <h1 className="text-2xl font-bold mb-3 mt-6 text-foreground">{children}</h1>,
           h2: ({ children }: any) => <h2 className="text-xl font-semibold mb-2 mt-5 text-foreground">{children}</h2>,
           h3: ({ children }: any) => <h3 className="text-lg font-semibold mb-2 mt-4 text-foreground">{children}</h3>,
-          ul: ({ children }: any) => (
-            <ul className="mb-4 pl-6 space-y-2 text-base text-foreground">
-              {React.Children.toArray(children)
-                .filter(child => {
-                  if (typeof child === 'string') return child.trim() !== '';
-                  if (React.isValidElement(child)) {
-                    const el = child as React.ReactElement;
-                    const props = el.props as any;
-                    if ('children' in props) {
-                      if (typeof props.children === 'string') {
-                        return props.children.trim() !== '';
-                      }
-                      return !!props.children;
-                    }
-                  }
-                  return !!child;
-                })
-                .map((child, idx) => {
-                  if (React.isValidElement(child) && child.type === 'li') {
-                    return React.cloneElement(child, { key: idx });
-                  }
-                  return (
-                    <li className="flex items-start" key={idx}>
-                      <span className="select-text mr-2">•</span>
-                      <span>{child}</span>
-                    </li>
-                  );
-                })}
-            </ul>
-          ),
-          ol: ({ children }: any) => (
-            <ol className="mb-4 pl-6 space-y-2 text-base text-foreground">
-              {React.Children.toArray(children)
-                .filter(child => {
-                  if (typeof child === 'string') return child.trim() !== '';
-                  if (React.isValidElement(child)) {
-                    const el = child as React.ReactElement;
-                    const props = el.props as any;
-                    if ('children' in props) {
-                      if (typeof props.children === 'string') {
-                        return props.children.trim() !== '';
-                      }
-                      return !!props.children;
-                    }
-                  }
-                  return !!child;
-                })
-                .map((child, idx) => {
-                  if (React.isValidElement(child) && child.type === 'li') {
-                    return React.cloneElement(child, { key: idx });
-                  }
-                  return (
-                    <li className="flex items-start" key={idx}>
-                      <span className="select-text mr-2">{idx + 1}.</span>
-                      <span>{child}</span>
-                    </li>
-                  );
-                })}
-            </ol>
-          ),
+          ul: ({ children }: any) => <ul className="mb-4 pl-6 space-y-2 text-base text-foreground" style={{ listStyleType: 'disc' }}>{children}</ul>,
+          ol: ({ children }: any) => <ol className="mb-4 pl-6 space-y-2 text-base text-foreground" style={{ listStyleType: 'decimal' }}>{children}</ol>,
           li: ({ children }: any) => <li className="text-base leading-relaxed text-foreground">{children}</li>,
           blockquote: ({ children }: any) => (
             <blockquote className="border-l-4 border-primary/30 pl-4 italic text-muted-foreground my-4 py-1">{children}</blockquote>
