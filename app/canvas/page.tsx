@@ -113,7 +113,7 @@ function CanvasInner() {
         edges={edges}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
-        colorMode="dark"
+        colorMode={colorMode}
         onConnect={onConnect}
         onNodeContextMenu={onNodeContextMenu}
         onPaneClick={onPaneClick}
