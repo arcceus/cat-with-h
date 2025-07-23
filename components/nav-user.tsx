@@ -7,10 +7,11 @@ import {
   CreditCard,
   LogOut,
   Sparkles,
-  UserPlus,
-  UserCheck,
+  User,
+  Key,
 } from "lucide-react"
-import { useUser, useClerk, SignInButton, SignUpButton } from "@clerk/nextjs"
+import { useUser, useClerk, SignInButton } from "@clerk/nextjs"
+import { useState, useEffect } from "react"
 
 import {
   Avatar,
@@ -33,11 +34,38 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar"
 import { Button } from "@/components/ui/button"
+import { Switch } from "@/components/ui/switch"
+import { useChatStore } from '@/app/store/chatStore';
+import { ApiKeyDialog } from "./api-key-dialog"
 
 export function NavUser() {
   const { isSignedIn, user, isLoaded } = useUser()
   const { signOut } = useClerk()
   const { isMobile } = useSidebar()
+  const [apiKeyDialogOpen, setApiKeyDialogOpen] = useState(false)
+  const [hasCustomApiKey, setHasCustomApiKey] = useState(false)
+  const {
+    canvasEnabled, setCanvasEnabled,
+    chatEnabled, setChatEnabled,
+    flipLayout, setFlipLayout
+  } = useChatStore();
+
+  // Check if user has a custom API key stored
+  useEffect(() => {
+    const checkCustomApiKey = () => {
+      const storedKey = localStorage.getItem('custom-gemini-api-key')
+      setHasCustomApiKey(!!storedKey)
+    }
+    
+    checkCustomApiKey()
+    
+    // Listen for storage changes (in case user opens multiple tabs)
+    window.addEventListener('storage', checkCustomApiKey)
+    
+    return () => {
+      window.removeEventListener('storage', checkCustomApiKey)
+    }
+  }, [apiKeyDialogOpen]) // Re-check when dialog closes
 
   // Show loading state while Clerk is initializing
   if (!isLoaded) {
@@ -56,37 +84,28 @@ export function NavUser() {
     )
   }
 
-  // Show sign in/up buttons for unauthenticated users
+  // Show single Login button for unauthenticated users
   if (!isSignedIn) {
     return (
       <SidebarMenu>
         <SidebarMenuItem>
           <div className="flex flex-col gap-2 p-2">
             <div className="text-xs text-muted-foreground text-center mb-2">
-              Sign in to save your chats
+              Please log in to save your chats
             </div>
             <SignInButton mode="modal">
               <Button size="sm" variant="default" className="w-full">
-                <UserCheck className="h-4 w-4 mr-2" />
-                Sign In
+                <User className="h-4 w-4 mr-2" />
+                Login
               </Button>
             </SignInButton>
-            <SignUpButton mode="modal">
-              <Button size="sm" variant="outline" className="w-full">
-                <UserPlus className="h-4 w-4 mr-2" />
-                Sign Up
-              </Button>
-            </SignUpButton>
-            <div className="text-xs text-muted-foreground text-center mt-2">
-              💬 5 free messages without account
-            </div>
           </div>
         </SidebarMenuItem>
       </SidebarMenu>
     )
   }
 
-  // Show user profile for authenticated users
+  // Show user profile for authenticated users, with toggles in menu
   return (
     <SidebarMenu>
       <SidebarMenuItem>
@@ -158,6 +177,35 @@ export function NavUser() {
                 <Bell />
                 Notifications
               </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setApiKeyDialogOpen(true)}>
+                <Key />
+                <span className="flex-1">API Key Settings</span>
+                {hasCustomApiKey && (
+                  <div className="h-2 w-2 rounded-full bg-green-500" title="Custom API key active" />
+                )}
+              </DropdownMenuItem>
+            </DropdownMenuGroup>
+            <DropdownMenuSeparator />
+            {/* Canvas, Chat, Flip UI Toggles */}
+            <DropdownMenuGroup>
+              <DropdownMenuItem asChild>
+                <div className="flex items-center gap-2 w-full">
+                  <Switch id="canvas-toggle" checked={canvasEnabled} onCheckedChange={setCanvasEnabled} />
+                  <label htmlFor="canvas-toggle" className="text-xs">Canvas</label>
+                </div>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <div className="flex items-center gap-2 w-full">
+                  <Switch id="chat-toggle" checked={chatEnabled} onCheckedChange={setChatEnabled} />
+                  <label htmlFor="chat-toggle" className="text-xs">Chat</label>
+                </div>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <div className="flex items-center gap-2 w-full">
+                  <Switch id="flip-toggle" checked={flipLayout} onCheckedChange={setFlipLayout} />
+                  <label htmlFor="flip-toggle" className="text-xs">Flip UI</label>
+                </div>
+              </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={() => signOut()}>
@@ -167,6 +215,12 @@ export function NavUser() {
           </DropdownMenuContent>
         </DropdownMenu>
       </SidebarMenuItem>
+      
+      {/* API Key Dialog */}
+      <ApiKeyDialog 
+        open={apiKeyDialogOpen} 
+        onOpenChange={setApiKeyDialogOpen} 
+      />
     </SidebarMenu>
   )
 }

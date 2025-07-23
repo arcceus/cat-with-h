@@ -1,5 +1,5 @@
 "use client";
-import { useState, useCallback, useRef } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import {
   ReactFlow,
   MiniMap,
@@ -19,7 +19,6 @@ import '@xyflow/react/dist/style.css';
 import { useTheme } from 'next-themes';
 import CustomNode from './customNode';
 import CustomEdge from './CustomEdge';
-import React from 'react';
 import { useCanvasStore } from '../store/canvasStore';
 import { useReactFlow } from '@xyflow/react';
 
@@ -63,14 +62,36 @@ function CanvasInner() {
   const [edges, setEdges, onEdgesChange] = useEdgesState(canvases[currentKey]?.edges || initialEdges);
   const [menu, setMenu] = useState<MenuState>(null);
   const ref = useRef<HTMLDivElement>(null);
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const { theme } = useTheme();
 
   const reactFlowInstance = useReactFlow();
 
-  // Sync Zustand on any change
+  // Debounced save function - only saves after 1 second of no changes
+  const debouncedSave = useCallback((key: string, data: { nodes: any[], edges: any[] }) => {
+    // Clear existing timeout
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+    
+    // Set new timeout
+    saveTimeoutRef.current = setTimeout(() => {
+      console.log('💾 Auto-saving canvas after debounce...');
+      saveCanvas(key, data);
+    }, 1000); // 1 second debounce
+  }, [saveCanvas]);
+
+  // Sync Zustand on any change (with debouncing)
   React.useEffect(() => {
-    saveCanvas(currentKey, { nodes, edges });
-  }, [nodes, edges, currentKey, saveCanvas]);
+    debouncedSave(currentKey, { nodes, edges });
+    
+    // Cleanup timeout on unmount
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+    };
+  }, [nodes, edges, currentKey, debouncedSave]);
 
   // When canvas key changes, load nodes/edges
   React.useEffect(() => {
@@ -140,8 +161,8 @@ function CanvasInner() {
         }}
         onDragOver={event => event.preventDefault()}
       >
-        <MiniMap />
-        <Controls position="top-left" />
+        {/* <MiniMap /> */}
+        {/* <Controls position="top-left" /> */}
         <Background />
       </ReactFlow>
     </div>

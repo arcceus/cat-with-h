@@ -239,7 +239,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <Separator className="my-1 w-[90%] mx-auto" />
         </div>
         {/* Chat List */}
-        <div className="mt-2 flex flex-col gap-1 max-h-72 overflow-y-auto w-56 mx-auto">
+        <div className="mt-2 flex flex-col gap-1 overflow-y-auto w-56 mx-auto">
           {/* Pinned Chats */}
           {pinnedChats.length > 0 && (
             <>
@@ -262,7 +262,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                         />
                       ) : (
                         <span
-                          className="truncate flex-1 text-sm font-normal"
+                          className="truncate w-full block text-sm font-normal"
                           onDoubleClick={() => {
                             setRenameId(chat.chatId);
                             setRenameValue(chat.title);
@@ -308,7 +308,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                           />
                         ) : (
                           <span
-                            className="group truncate flex-1 text-sm font-normal"
+                            className="truncate w-full block text-sm font-normal"
                             onDoubleClick={() => {
                               setRenameId(chat.chatId);
                               setRenameValue(chat.title);

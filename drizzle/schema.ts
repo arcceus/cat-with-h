@@ -44,6 +44,7 @@ export const canvases = pgTable("canvases", {
 export const canvasesMeta = pgTable("canvases_meta", {
   canvasId: varchar("canvas_id", { length: 255 }).notNull().references(() => canvases.id, { onDelete: "cascade" }),
   userId: varchar("user_id", { length: 255 }).notNull().references(() => users.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
   pinned: boolean("pinned").notNull().default(false),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull(),
 }, (table) => ({

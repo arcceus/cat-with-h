@@ -2,7 +2,7 @@ import React from 'react'
 import { motion } from 'framer-motion'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
-import { Copy, RotateCcw } from 'lucide-react'
+import { Copy, RotateCcw, MousePointerClick } from 'lucide-react'
 import { MarkdownRenderer } from './markdown-renderer';
 import { MarkdownWithMarkers } from './MarkdownWithMarkers';
 
@@ -14,6 +14,8 @@ const ChatMessage = React.memo(function ChatMessage({
   'data-message-id': dataMessageId,
   chatId,
   messageId,
+  onToggleSelectionMode,
+  onRegenerate,
   ...props 
 }: { 
   message: { id: string; role: 'user' | 'assistant'; content: string }, 
@@ -23,6 +25,8 @@ const ChatMessage = React.memo(function ChatMessage({
   'data-message-id'?: string,
   chatId?: string,
   messageId?: string,
+  onToggleSelectionMode?: () => void,
+  onRegenerate?: () => void,
 }) {
   // Optimize for streaming performance
   const isStreaming = status === 'streaming' && message.id === 'pending-ai'
@@ -58,33 +62,6 @@ const ChatMessage = React.memo(function ChatMessage({
             if (messageId) e.dataTransfer.setData('application/x-message-id', messageId);
           }}
         >
-          {/* Drag handle at the top */}
-          <div
-            draggable
-            onDragStart={(e: React.DragEvent<HTMLDivElement>) => {
-              e.dataTransfer.setData('text/plain', message.content);
-              if (chatId) e.dataTransfer.setData('application/x-chat-id', chatId);
-              if (messageId) e.dataTransfer.setData('application/x-message-id', messageId);
-            }}
-            style={{
-              width: '100%',
-              height: 24,
-              background: 'rgba(0,0,0,0.06)',
-              borderRadius: 6,
-              marginBottom: 8,
-              cursor: 'grab',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              userSelect: 'none',
-              fontWeight: 500,
-              letterSpacing: 1,
-              fontSize: 13,
-            }}
-            title="Drag to canvas"
-          >
-            ⠿ Drag to Canvas
-          </div>
           {message.role === 'assistant' ? (
             <>
               {selectionMode ? (
@@ -130,14 +107,13 @@ const ChatMessage = React.memo(function ChatMessage({
                   Copy
                 </Button>
                 <Button
-                  variant="ghost"
+                  variant={selectionMode ? "secondary" : "ghost"}
                   size="sm"
                   className="h-7 px-2 text-xs"
-                  onClick={() => {/* reload() */}}
-                  disabled={status === 'streaming' || status === 'submitted'}
+                  onClick={onToggleSelectionMode}
                 >
-                  <RotateCcw className="h-3 w-3 mr-1" />
-                  Regenerate
+                  <MousePointerClick className="h-3 w-3 mr-1" />
+                  {selectionMode ? 'Selection On' : 'Select' }
                 </Button>
               </div>
             </>

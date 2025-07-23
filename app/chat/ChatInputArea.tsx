@@ -77,22 +77,7 @@ const ChatInputArea: React.FC<ChatInputAreaProps> = ({
             />
             {/* Controls row below input: toggles, model, web, attach left; send right */}
             <div className="flex items-center justify-between mt-2">
-              <div className="flex items-center gap-3">
-                {/* Toggles for Canvas, Chat, Flip Layout */}
-                <div className="flex items-center gap-2">
-                  <Switch id="canvas-toggle" checked={canvasEnabled} onCheckedChange={setCanvasEnabled} />
-                  <label htmlFor="canvas-toggle" className="text-xs text-muted-foreground">Canvas</label>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Switch id="chat-toggle" checked={chatEnabled} onCheckedChange={setChatEnabled} />
-                  <label htmlFor="chat-toggle" className="text-xs text-muted-foreground">Chat</label>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Switch id="flip-toggle" checked={flipLayout} onCheckedChange={setFlipLayout} />
-                  <label htmlFor="flip-toggle" className="text-xs text-muted-foreground">Flip UI</label>
-                </div>
-              </div>
-              <div className="flex items-center gap-1">
+              <div className="flex items-start gap-1">
                 <Button
                   type="button"
                   variant={webSearchEnabled ? "secondary" : "ghost"}

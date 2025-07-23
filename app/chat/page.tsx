@@ -2,15 +2,13 @@
 
 import { useChatStore } from '../store/chatStore'
 import { 
-  Bot,
-  Sparkles,
-  Zap,
-  Brain
+  Bot
 } from 'lucide-react'
 import { useRef, useEffect, useLayoutEffect } from 'react'
 import type { Message } from '../types'
 import React, { useCallback } from 'react'
 import ChatMessage from './ChatMessage'
+import { useState } from 'react'
 
 // Convert from your Message type to SDK/UI message type
 function toSdkMessages(messages: Message[]) {
@@ -32,18 +30,12 @@ function fromSdkMessages(sdkMessages: any[], chatId: string): Message[] {
   }))
 }
 
-const AI_MODELS = [
-  { id: 'gpt-4', name: 'GPT-4', icon: Brain, description: 'Most capable model' },
-  { id: 'gpt-3.5-turbo', name: 'GPT-3.5 Turbo', icon: Zap, description: 'Fast and efficient' },
-  { id: 'claude-3', name: 'Claude 3', icon: Sparkles, description: 'Anthropic\'s latest' },
-]
-
 export default function ChatPage({
   status,
   pendingUserMessage,
   sdkMessages,
   setPendingUserMessage,
-  selectionMode = false
+  selectionMode: selectionModeProp = false
 }: {
   canvasEnabled: boolean,
   setCanvasEnabled: (v: boolean) => void,
@@ -58,6 +50,7 @@ export default function ChatPage({
   selectionMode?: boolean
 }) {
   const { activeChatId, chats, setActiveChat } = useChatStore()
+  const [selectionMode, setSelectionMode] = useState(selectionModeProp)
   // const [selectedModel, setSelectedModel] = useState(AI_MODELS[0])
   // const [webSearchEnabled, setWebSearchEnabled] = useState(false)
   const userMessageRef = useRef<string>('')
@@ -174,6 +167,30 @@ export default function ChatPage({
 
   const memoizedCopyToClipboard = useCallback(copyToClipboard, [])
 
+  // Handler to toggle selection mode
+  const handleToggleSelectionMode = () => setSelectionMode((prev) => !prev)
+
+  // Handler to regenerate the AI message for a given user message
+  const handleRegenerate = (aiMessageId?: string) => {
+    if (!activeChat || !activeChatId) return;
+    // Find the AI message by messageId
+    const aiMsgIndex = (activeChat.messages || []).findIndex(m => m.messageId + '-ai' === aiMessageId);
+    if (aiMsgIndex === -1) return;
+    const userMsg = activeChat.messages[aiMsgIndex];
+    if (userMsg && userMsg.content.user) {
+      // Remove the old AI response
+      const updatedMessages = [...activeChat.messages];
+      updatedMessages[aiMsgIndex] = {
+        ...userMsg,
+        content: { ...userMsg.content, ai: '' }
+      };
+      // Update the chat messages in Zustand
+      useChatStore.getState().updateChatMessages(activeChatId, updatedMessages);
+      // Trigger regeneration by setting pendingUserMessage
+      setPendingUserMessage(userMsg.content.user);
+    }
+  }
+
   if (!activeChatId) {
     return (
       <div className="h-full flex items-center justify-center">
@@ -211,6 +228,8 @@ export default function ChatPage({
                 selectionMode={selectionMode}
                 chatId={activeChatId}
                 messageId={message.id}
+                onToggleSelectionMode={handleToggleSelectionMode}
+                onRegenerate={() => handleRegenerate(message.id)}
               />
             ))}
             {/* Empty space at bottom for better UX */}

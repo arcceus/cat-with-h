@@ -1,11 +1,10 @@
 "use client";
+import React, { useState, useRef, useCallback, useEffect } from 'react'
 import { AppSidebar } from "@/components/app-sidebar";
 import {
   SidebarInset,
-  SidebarProvider,
-  SidebarTrigger,
+  SidebarProvider
 } from "@/components/ui/sidebar"
-import { ThemeToggle } from "@/components/ui/theme-toggle"
 import {
   ResizablePanelGroup,
   ResizablePanel,
@@ -13,37 +12,17 @@ import {
 } from "@/components/ui/resizable";
 import Canvas from "../canvas/page";
 import { useChatStore } from "@/app/store/chatStore";
-import { Plus } from "lucide-react";
-import { useSidebar } from "@/components/ui/sidebar";
 import ChatPage from "../chat/page";
-import { useState, useRef, useCallback, useEffect } from 'react'
 import ChatInputArea from '../chat/ChatInputArea'
-import { useChat } from '@ai-sdk/react'
-import type { Message } from '../types'
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
+import { FloatingControls } from '@/components/FloatingControls';
+import { useWorkspaceChat } from '@/hooks/useWorkspaceChat';
 
-function FloatingControls({ handleNewChat }: { handleNewChat: () => void }) {
-  const { state } = useSidebar();
-  return (
-    <div className="fixed top-3 left-1 z-50 flex items-center min-h-8 px-2 gap-2 bg-sidebar rounded-lg shadow-lg">
-      <SidebarTrigger />
-      <ThemeToggle />
-      {state === "collapsed" && (
-        <button
-          onClick={handleNewChat}
-          className="flex items-center justify-center w-7 h-6 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition"
-          title="New Chat"
-        >
-          <Plus className="w-4 h-4" />
-        </button>
-      )}
-    </div>
-  );
-}
+// FloatingControls moved to components/FloatingControls.tsx
 
 export default function Workspace() {
-  const { addChat, chats, canvasEnabled, setCanvasEnabled, chatEnabled, setChatEnabled, flipLayout, setFlipLayout, webSearchEnabled, setWebSearchEnabled, activeChatId, updateChatMessages } = useChatStore();
+  const { addChat, chats, canvasEnabled, setCanvasEnabled, chatEnabled, setChatEnabled, flipLayout, setFlipLayout, webSearchEnabled, setWebSearchEnabled, activeChatId } = useChatStore();
   const [showScrollButton, setShowScrollButton] = useState(false)
   const inputAreaRef = useRef<HTMLDivElement>(null)
 
@@ -60,56 +39,16 @@ export default function Workspace() {
     return () => window.removeEventListener('keydown', handler);
   }, []);
 
-  // Chat logic lifted from ChatPage
-  const userMessageRef = useRef<string>('')
-  const [pendingUserMessage, setPendingUserMessage] = useState<string | undefined>(undefined)
-  const messagesEndRef = useRef<HTMLDivElement>(null)
-
-  const activeChat = chats.find(chat => chat.chatId === activeChatId)
-
+  // Chat streaming logic moved to useWorkspaceChat
   const {
-    append,
+    onSend,
     status,
-    messages: sdkMessages,
-    setInput
-  } = useChat({
-    id: activeChatId || undefined,
-    onFinish: (finalMessage: any) => {
-      if (activeChatId && userMessageRef.current) {
-        const newMessage: Message = {
-          chatId: activeChatId,
-          messageId: finalMessage.id,
-          content: {
-            user: userMessageRef.current,
-            ai: finalMessage.content
-          }
-        }
-        const updatedMessages = [...(activeChat?.messages || []), newMessage]
-        updateChatMessages(activeChatId, updatedMessages)
-        userMessageRef.current = ''
-        setPendingUserMessage(undefined)
-      }
-    },
-  })
-
-  const onSend = useCallback((input: string) => {
-    if (!input.trim()) return
-    userMessageRef.current = input || ''
-    setPendingUserMessage(input)
-    append({ role: 'user', content: input })
-  }, [append])
-
-  // onSend and status will be passed to ChatPage and ChatInputArea
-  // We'll need to lift up the useChat logic from ChatPage to here, or pass a callback down
-  // For now, pass a dummy onSend and status, to be replaced in next step
-
-  // Scroll to bottom logic
-  const scrollToBottom = () => {
-    const scrollContainer = document.querySelector('.messages-container')
-    if (scrollContainer) {
-      scrollContainer.scrollTop = scrollContainer.scrollHeight
-    }
-  }
+    sdkMessages,
+    pendingUserMessage,
+    setPendingUserMessage,
+    userMessageRef,
+    setInput,
+  } = useWorkspaceChat(activeChatId || undefined);
 
   const handleNewChat = () => {
     const newChat = {
@@ -120,6 +59,13 @@ export default function Workspace() {
     };
     addChat(newChat);
   };
+
+  const scrollToBottom = () => {
+    const scrollContainer = document.querySelector('.messages-container')
+    if (scrollContainer) {
+      scrollContainer.scrollTop = scrollContainer.scrollHeight
+    }
+  }
 
   return (
     <DndProvider backend={HTML5Backend}>
@@ -156,20 +102,20 @@ export default function Workspace() {
                 </ResizablePanel>
               ),
               canvasEnabled && (
-                <>
-                  <ResizableHandle key="handle" />
-                  <ResizablePanel key="canvas" defaultSize={40} minSize={20}>
+                <React.Fragment key="canvas-handle">
+                  <ResizableHandle />
+                  <ResizablePanel defaultSize={40} minSize={20}>
                     <div className="h-full w-full">
                       <div className="h-full w-full overflow-hidden">
                         <Canvas />
                       </div>
                     </div>
                   </ResizablePanel>
-                </>
+                </React.Fragment>
               )
             ] : [
               canvasEnabled && (
-                <ResizablePanel key="canvas" defaultSize={40} minSize={20}>
+                <ResizablePanel key="canvas-flipped" defaultSize={40} minSize={20}>
                   <div className="h-full w-full">
                     <div className="h-full w-full overflow-hidden">
                       <Canvas />
@@ -178,9 +124,9 @@ export default function Workspace() {
                 </ResizablePanel>
               ),
               chatEnabled && (
-                <>
-                  <ResizableHandle key="handle" />
-                  <ResizablePanel key="chat" defaultSize={60} minSize={55} maxSize={70}>
+                <React.Fragment key="chat-handle">
+                  <ResizableHandle />
+                  <ResizablePanel defaultSize={60} minSize={55} maxSize={70}>
                     <div className="h-full w-full">
                       <div className="h-full w-full rounded-xl overflow-hidden">
                         <ChatPage
@@ -189,17 +135,14 @@ export default function Workspace() {
                           chatEnabled={chatEnabled}
                           setChatEnabled={setChatEnabled}
                           flipLayout={flipLayout}
-                          setFlipLayout={setFlipLayout} status={""} pendingUserMessage={undefined} sdkMessages={[]} setPendingUserMessage={function (v: string | undefined): void {
-                            throw new Error("Function not implemented.");
-                          } }
-                          selectionMode={selectionMode}
+                          setFlipLayout={setFlipLayout} status={status} pendingUserMessage={pendingUserMessage} sdkMessages={sdkMessages} setPendingUserMessage={setPendingUserMessage} selectionMode={selectionMode}
                         />
                       </div>
                     </div>
                   </ResizablePanel>
-                </>
+                </React.Fragment>
               )
-            ])}
+            ]).filter(Boolean)}
           </ResizablePanelGroup>
         </SidebarInset>
         {/* Input bar always visible */}
