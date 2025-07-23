@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 
 export default function Page() {
 
-  redirect('/chat')
+  redirect('/workspace')
   // const { messages, input, handleInputChange, handleSubmit } = useChat({});
   // console.log(messages)
 
