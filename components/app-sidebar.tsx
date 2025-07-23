@@ -37,11 +37,6 @@ import { ThemeToggle } from '@/components/ui/theme-toggle';
 import CanvasDropdown from "@/app/canvas/CanvasDropdown"
 
 const data = {
-  user: {
-    name: "deepak",
-    email: "m@example.com",
-    avatar: "/avatars/shadcn.jpg",
-  },
   navMain: [
     {
       title: "Playground",
@@ -340,7 +335,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </div>
       </SidebarHeader>
       <SidebarFooter className="mt-auto flex items-end w-56 mx-auto">
-        <NavUser user={data.user} />
+        <NavUser />
       </SidebarFooter>
     </Sidebar>
   )

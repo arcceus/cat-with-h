@@ -14,6 +14,7 @@ interface ChatState {
   activeChatId: string | null;
   pinned: Record<string, boolean>;
   search: string;
+  guestMessageCount: number; // Track messages for unauthenticated users
   addChat: (chat: Chat) => void;
   setActiveChat: (chatId: string) => void;
   deleteChat: (chatId: string) => void;
@@ -22,6 +23,9 @@ interface ChatState {
   unpinChat: (chatId: string) => void;
   setSearch: (search: string) => void;
   updateChatMessages: (chatId: string, messages: Message[]) => void;
+  incrementGuestMessageCount: () => void;
+  resetGuestMessageCount: () => void;
+  canGuestSendMessage: () => boolean;
   canvasEnabled: boolean;
   setCanvasEnabled: (v: boolean) => void;
   chatEnabled: boolean;
@@ -39,6 +43,7 @@ export const useChatStore = create<ChatState>()(
       activeChatId: null,
       pinned: {},
       search: '',
+      guestMessageCount: 0,
       canvasEnabled: true,
       setCanvasEnabled: (v: boolean) => set({ canvasEnabled: v }),
       chatEnabled: true,
@@ -47,6 +52,9 @@ export const useChatStore = create<ChatState>()(
       setFlipLayout: (v: boolean) => set({ flipLayout: v }),
       webSearchEnabled: false,
       setWebSearchEnabled: (v: boolean) => set({ webSearchEnabled: v }),
+      incrementGuestMessageCount: () => set((state) => ({ guestMessageCount: state.guestMessageCount + 1 })),
+      resetGuestMessageCount: () => set({ guestMessageCount: 0 }),
+      canGuestSendMessage: () => get().guestMessageCount < 5,
       addChat: (chat: Chat) => set((state) => {
         const newChats = [chat, ...state.chats];
         console.log('[addChat] chats:', newChats);
@@ -103,6 +111,7 @@ export const useChatStore = create<ChatState>()(
         activeChatId: state.activeChatId,
         pinned: state.pinned,
         search: state.search,
+        guestMessageCount: state.guestMessageCount,
         canvasEnabled: state.canvasEnabled,
         chatEnabled: state.chatEnabled,
         flipLayout: state.flipLayout,

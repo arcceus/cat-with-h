@@ -2,7 +2,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { ThemeProvider } from "next-themes"
+import { ClerkProvider } from '@clerk/nextjs'
 import { ReactScan } from "../components/ReactScan"
 import Providers from "./themeProvider";
 
@@ -28,6 +28,7 @@ export default function RootLayout({
 }>) {
 
   return (
+  <ClerkProvider>
     <html lang="en">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
@@ -38,5 +39,6 @@ export default function RootLayout({
         </Providers>
       </body>
     </html>
+  </ClerkProvider>
   );
 }
