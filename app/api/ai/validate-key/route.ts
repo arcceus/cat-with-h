@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { createGoogleGenerativeAI } from '@ai-sdk/google';
+import { generateText } from 'ai';
 
 export async function POST(req: NextRequest) {
   try {
@@ -9,12 +10,19 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'API key is required' }, { status: 400 });
     }
 
-    // Test the API key by making a simple request
-    const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+    // Test the API key by making a simple request using ai-sdk
+    const customGoogle = createGoogleGenerativeAI({
+      apiKey: apiKey,
+    });
+    
+    const model = customGoogle('gemini-2.0-flash');
     
     // Make a minimal request to validate the key
-    const result = await model.generateContent("Hi");
+    const result = await generateText({
+      model,
+      prompt: "Hi",
+      maxTokens: 5,
+    });
     
     // If we get here, the API key is valid
     return NextResponse.json({ valid: true });
@@ -25,7 +33,9 @@ export async function POST(req: NextRequest) {
     // Check for specific Google API errors
     if (error.message?.includes('API_KEY_INVALID') || 
         error.message?.includes('Invalid API key') ||
-        error.status === 400) {
+        error.message?.includes('403') ||
+        error.status === 400 || 
+        error.status === 403) {
       return NextResponse.json({ error: 'Invalid API key' }, { status: 400 });
     }
     
