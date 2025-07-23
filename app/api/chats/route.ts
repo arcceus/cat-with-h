@@ -56,7 +56,7 @@ export async function POST(req: NextRequest) {
         id: chatId,
         userId,
         title: body.title,
-        updatedAt: body.updatedAt,
+        updatedAt: new Date(body.updatedAt),
       })
       .returning();
   } catch (e) {
