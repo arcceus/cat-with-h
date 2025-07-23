@@ -29,8 +29,8 @@ export async function POST(req: NextRequest) {
 
   // Prompt for a short, relevant chat title
   const prompt = [
-    { role: 'system', content: 'You are a helpful assistant. Given a user message (and optionally an AI response), generate a short, relevant chat title (max 5 words, no punctuation, no quotes, no greeting, no period, no emojis). Return only the title.' },
-    { role: 'user', content: `User: ${userMessage}${aiResponse ? `\nAI: ${aiResponse}` : ''}` }
+    { role: 'system' as const, content: 'You are a helpful assistant. Given a user message (and optionally an AI response), generate a short, relevant chat title (max 5 words, no punctuation, no quotes, no greeting, no period, no emojis). Return only the title.' },
+    { role: 'user' as const, content: `User: ${userMessage}${aiResponse ? `\nAI: ${aiResponse}` : ''}` }
   ];
 
   const result = await streamText({
@@ -39,6 +39,6 @@ export async function POST(req: NextRequest) {
     maxTokens: 20,
   });
 
-  const { text } = await result;
+  const text = await result.text;
   return Response.json({ title: text.trim() });
 } 

@@ -17,7 +17,7 @@ import { Button } from '@/components/ui/button';
 import { useDuplicateNode, useDeleteNode, useAddNode } from './nodeActions';
 import { Move } from 'lucide-react';
 import DOMPurify from 'dompurify';
-import { MarkdownRenderer } from '../chat/markdown-renderer';
+import { MarkdownRenderer } from '../_chat/markdown-renderer';
 
 export default function CustomNode({ id, data, isConnectable }: NodeProps) {
   const duplicateNode = useDuplicateNode();

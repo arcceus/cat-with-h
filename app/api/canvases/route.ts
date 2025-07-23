@@ -18,7 +18,7 @@ export async function GET(req: NextRequest) {
   const canvasIds = userCanvases.map(c => c.id);
 
   // Fetch all meta for these canvases
-  let userMeta = [];
+  let userMeta: any[] = [];
   if (canvasIds.length > 0) {
     userMeta = await db.select().from(canvasesMeta).where(
       inArray(canvasesMeta.canvasId, canvasIds)

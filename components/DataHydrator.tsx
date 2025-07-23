@@ -2,8 +2,8 @@
 
 import { useUser } from '@clerk/nextjs';
 import { useEffect, useRef, useState, createContext, useContext } from 'react';
-import { useChatStore } from '@/app/store/chatStore';
-import { useCanvasStore } from '@/app/store/canvasStore';
+import { useChatStore } from '@/store/chatStore';
+import { useCanvasStore } from '@/store/canvasStore';
 import { toast } from 'sonner';
 
 // Create a context for hydration state

@@ -35,7 +35,7 @@ import {
 } from "@/components/ui/sidebar"
 import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"
-import { useChatStore } from '@/app/store/chatStore';
+import { useChatStore } from '@/store/chatStore';
 import { ApiKeyDialog } from "./api-key-dialog"
 
 export function NavUser() {

@@ -1,4 +1,4 @@
-import { useCanvasStore } from '../store/canvasStore';
+import { useCanvasStore } from '../../store/canvasStore';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useState, useRef, useEffect } from 'react';

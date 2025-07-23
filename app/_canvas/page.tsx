@@ -19,7 +19,7 @@ import '@xyflow/react/dist/style.css';
 import { useTheme } from 'next-themes';
 import CustomNode from './customNode';
 import CustomEdge from './CustomEdge';
-import { useCanvasStore } from '../store/canvasStore';
+import { useCanvasStore } from '../../store/canvasStore';
 import { useReactFlow } from '@xyflow/react';
 
 type MenuState = {

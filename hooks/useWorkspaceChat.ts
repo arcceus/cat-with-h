@@ -1,5 +1,5 @@
 import { useChat } from '@ai-sdk/react';
-import { useChatStore } from '@/app/store/chatStore';
+import { useChatStore } from '@/store/chatStore';
 import { useRef, useState, useEffect } from 'react';
 import type { Message } from '../app/types';
 import { useUser } from '@clerk/nextjs';

@@ -10,10 +10,10 @@ import {
   ResizablePanel,
   ResizableHandle,
 } from "@/components/ui/resizable";
-import Canvas from "../canvas/page";
-import { useChatStore } from "@/app/store/chatStore";
-import ChatPage from "../chat/page";
-import ChatInputArea from '../chat/ChatInputArea'
+import Canvas from "../_canvas/page";
+import { useChatStore } from "@/store/chatStore";
+import ChatPage from "../_chat/ChatPage";
+import ChatInputArea from '../_chat/ChatInputArea'
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { FloatingControls } from '@/components/FloatingControls';

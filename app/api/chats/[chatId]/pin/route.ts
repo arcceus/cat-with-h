@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server';
 import { getAuth } from '@clerk/nextjs/server';
 import { db } from '@/drizzle/db';
 import { pinnedChats, chats } from '@/drizzle/schema';
-import { eq } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ chatId: string }> }) {
   const { userId } = getAuth(req);
@@ -23,7 +23,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ c
   const chat = await db.query.chats.findFirst({ where: (c, { eq, and }) => and(eq(c.id, chatId), eq(c.userId, userId)) });
   if (!chat) return new Response('Not found', { status: 404 });
   await db.delete(pinnedChats).where(
-    (row, { eq, and }) => and(eq(row.userId, userId), eq(row.chatId, chatId))
+    and(eq(pinnedChats.userId, userId), eq(pinnedChats.chatId, chatId))
   );
   return new Response('Unpinned', { status: 200 });
 } 

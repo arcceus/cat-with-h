@@ -1,6 +1,6 @@
 "use client"
 
-import { useChatStore } from '../store/chatStore'
+import { useChatStore } from '../../store/chatStore'
 import { 
   Bot
 } from 'lucide-react'
@@ -30,25 +30,34 @@ function fromSdkMessages(sdkMessages: any[], chatId: string): Message[] {
   }))
 }
 
-export default function ChatPage({
-  status,
-  pendingUserMessage,
-  sdkMessages,
-  setPendingUserMessage,
-  selectionMode: selectionModeProp = false
-}: {
-  canvasEnabled: boolean,
-  setCanvasEnabled: (v: boolean) => void,
-  chatEnabled: boolean,
-  setChatEnabled: (v: boolean) => void,
-  flipLayout: boolean,
-  setFlipLayout: (v: boolean) => void,
-  status: string,
-  pendingUserMessage: string | undefined,
-  sdkMessages: any[],
-  setPendingUserMessage: (v: string | undefined) => void,
-  selectionMode?: boolean
-}) {
+interface ChatPageProps {
+  canvasEnabled: boolean;
+  setCanvasEnabled: (v: boolean) => void;
+  chatEnabled: boolean;
+  setChatEnabled: (v: boolean) => void;
+  flipLayout: boolean;
+  setFlipLayout: (v: boolean) => void;
+  status: string;
+  pendingUserMessage: string | undefined;
+  sdkMessages: any[];
+  setPendingUserMessage: (v: string | undefined) => void;
+  selectionMode?: boolean;
+}
+
+export default function ChatPage(props: ChatPageProps) {
+  const {
+    canvasEnabled,
+    setCanvasEnabled,
+    chatEnabled,
+    setChatEnabled,
+    flipLayout,
+    setFlipLayout,
+    status,
+    pendingUserMessage,
+    sdkMessages,
+    setPendingUserMessage,
+    selectionMode: selectionModeProp = false
+  } = props;
   const { activeChatId, chats, setActiveChat } = useChatStore()
   const [selectionMode, setSelectionMode] = useState(selectionModeProp)
   // const [selectedModel, setSelectedModel] = useState(AI_MODELS[0])
@@ -241,4 +250,4 @@ export default function ChatPage({
       {/* Remove ChatInputArea here */}
     </div>
   )
-}
+} 

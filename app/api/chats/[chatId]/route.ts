@@ -19,7 +19,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ chat
   const chat = await db.query.chats.findFirst({ where: (c, { eq, and }) => and(eq(c.id, chatId), eq(c.userId, userId)) });
   if (!chat) return new Response('Not found', { status: 404 });
   await db.update(chats)
-    .set({ title: body.title, updatedAt: new Date().toISOString() })
+    .set({ title: body.title, updatedAt: new Date() })
     .where(and(eq(chats.id, chatId), eq(chats.userId, userId)));
   return new Response('Updated', { status: 200 });
 }

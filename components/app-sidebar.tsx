@@ -26,7 +26,7 @@ import {
   SidebarHeader,
   SidebarTrigger,
 } from "@/components/ui/sidebar"
-import { useChatStore } from '@/app/store/chatStore';
+import { useChatStore } from '@/store/chatStore';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ContextMenu, ContextMenuTrigger, ContextMenuContent, ContextMenuItem } from '@/components/ui/context-menu';
@@ -34,7 +34,7 @@ import { Separator } from '@/components/ui/separator';
 import { useState } from 'react';
 import type { Chat } from '@/app/types';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
-import CanvasDropdown from "@/app/canvas/CanvasDropdown"
+import CanvasDropdown from "@/app/_canvas/CanvasDropdown"
 
 const data = {
   navMain: [
