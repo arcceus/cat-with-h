@@ -5,7 +5,7 @@ import { Plus } from "lucide-react";
 export function FloatingControls({ handleNewChat }: { handleNewChat: () => void }) {
   const { state } = useSidebar();
   return (
-    <div className="fixed top-3 left-1 z-50 flex items-center min-h-8 px-2 gap-2 bg-sidebar rounded-lg shadow-lg">
+    <div className="fixed top-1 pb-1 pt-2 left-1 z-50 flex items-center min-h-8 px-2 gap-2 bg-sidebar rounded-lg">
       <SidebarTrigger />
       <ThemeToggle />
       {state === "collapsed" && (
