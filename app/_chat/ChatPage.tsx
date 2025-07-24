@@ -8,6 +8,7 @@ import { useRef, useEffect, useLayoutEffect } from 'react'
 import type { Message } from '../types'
 import React, { useCallback } from 'react'
 import ChatMessage from './ChatMessage'
+import ChatInputArea from './ChatInputArea'
 import { useState } from 'react'
 
 // Convert from your Message type to SDK/UI message type
@@ -42,24 +43,33 @@ interface ChatPageProps {
   sdkMessages: any[];
   setPendingUserMessage: (v: string | undefined) => void;
   selectionMode?: boolean;
+  onSend: (input: string) => void;
+  webSearchEnabled: boolean;
+  setWebSearchEnabled: (v: boolean) => void;
+  inputAreaRef: React.RefObject<HTMLDivElement | null>;
 }
 
 export default function ChatPage(props: ChatPageProps) {
   const {
+    status,
+    pendingUserMessage,
+    sdkMessages,
+    setPendingUserMessage,
+    selectionMode: selectionModeProp = false,
+    onSend,
+    webSearchEnabled,
+    setWebSearchEnabled,
+    inputAreaRef,
     canvasEnabled,
     setCanvasEnabled,
     chatEnabled,
     setChatEnabled,
     flipLayout,
     setFlipLayout,
-    status,
-    pendingUserMessage,
-    sdkMessages,
-    setPendingUserMessage,
-    selectionMode: selectionModeProp = false
   } = props;
   const { activeChatId, chats, setActiveChat } = useChatStore()
   const [selectionMode, setSelectionMode] = useState(selectionModeProp)
+  const [showScrollButton, setShowScrollButton] = useState(false)
   // const [selectedModel, setSelectedModel] = useState(AI_MODELS[0])
   // const [webSearchEnabled, setWebSearchEnabled] = useState(false)
   const userMessageRef = useRef<string>('')
@@ -114,7 +124,7 @@ export default function ChatPage(props: ChatPageProps) {
       if (scrollContainer) {
         const { scrollTop, scrollHeight, clientHeight } = scrollContainer
         const isNearBottom = scrollHeight - scrollTop - clientHeight < 100
-        // setShowScrollButton(!isNearBottom) // This state is removed
+        setShowScrollButton(!isNearBottom)
       }
     }
     
@@ -247,7 +257,25 @@ export default function ChatPage(props: ChatPageProps) {
           </div>
         )}
       </div>
-      {/* Remove ChatInputArea here */}
+      
+      {/* Input Area - follows chat container width */}
+      <div className="bg-transparent">
+        <ChatInputArea
+          onSend={onSend}
+          status={status}
+          webSearchEnabled={webSearchEnabled}
+          setWebSearchEnabled={setWebSearchEnabled}
+          showScrollButton={showScrollButton}
+          scrollToBottom={scrollToBottom}
+          inputAreaRef={inputAreaRef}
+          canvasEnabled={canvasEnabled}
+          setCanvasEnabled={setCanvasEnabled}
+          chatEnabled={chatEnabled}
+          setChatEnabled={setChatEnabled}
+          flipLayout={flipLayout}
+          setFlipLayout={setFlipLayout}
+        />
+      </div>
     </div>
   )
 } 

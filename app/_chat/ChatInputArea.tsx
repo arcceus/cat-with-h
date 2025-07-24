@@ -52,8 +52,8 @@ const ChatInputArea: React.FC<ChatInputAreaProps> = ({
   }
 
   return (
-    <div ref={inputAreaRef as any} className="fixed bottom-0 left-0 right-0 z-20 flex flex-col items-center pointer-events-none">
-      <div className="w-full max-w-4xl mx-auto flex flex-col gap-2 pb-4 pointer-events-auto">
+    <div ref={inputAreaRef as any} className="relative pr-4 pb-3 pl-4 bg-transparent">
+      <div className="w-full max-w-4xl mx-auto flex flex-col gap-2">
         <form onSubmit={handleFormSubmit} className="flex flex-col gap-2">
           {/* Input field with background container */}
           <div className="bg-muted/50 backdrop-blur rounded-2xl p-3">

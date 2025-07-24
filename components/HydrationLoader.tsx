@@ -52,7 +52,7 @@ export default function HydrationLoader({ children }: { children: React.ReactNod
         clearInterval(textInterval);
       };
     } else if (isComplete) {
-      setProgress(100);
+      setProgress(400);
     }
   }, [isHydrating, isComplete]);
 

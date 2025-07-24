@@ -51,7 +51,7 @@ const ChatMessage = React.memo(function ChatMessage({
       >
         <div
           className={cn(
-            "max-w-3xl rounded-lg px-4 py-3 transition-colors duration-300 relative select-text",
+            "max-w-[99%] rounded-lg px-4 py-3 transition-colors duration-300 relative select-text",
             message.role === 'user'
               ? 'bg-primary text-primary-foreground'
               : 'bg-background',

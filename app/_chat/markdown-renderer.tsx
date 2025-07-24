@@ -7,8 +7,6 @@ import { Copy, WrapText, FileText } from 'lucide-react';
 import { useState } from 'react';
 
 const getCodeBlockStyle = (isWrapped: boolean) => ({
-  minWidth: 0,
-  maxWidth: '100%',
   fontSize: '0.95rem',
   background: 'var(--color-card, var(--card))',
   color: 'var(--color-foreground, var(--foreground))',
@@ -65,7 +63,7 @@ const CodeBlock = ({ language, code, copyToClipboard, isStreaming }: {
           style={{}}
           language={language}
           PreTag="div"
-          className="text-sm font-mono m-0 overflow-x-auto"
+          className="text-sm font-mono m-0"
           customStyle={getCodeBlockStyle(isWrapped)}
         >
           {code}

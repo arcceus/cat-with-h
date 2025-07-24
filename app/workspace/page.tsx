@@ -13,7 +13,6 @@ import {
 import Canvas from "../_canvas/page";
 import { useChatStore } from "@/store/chatStore";
 import ChatPage from "../_chat/ChatPage";
-import ChatInputArea from '../_chat/ChatInputArea'
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { FloatingControls } from '@/components/FloatingControls';
@@ -23,7 +22,6 @@ import { useWorkspaceChat } from '@/hooks/useWorkspaceChat';
 
 export default function Workspace() {
   const { addChat, chats, canvasEnabled, setCanvasEnabled, chatEnabled, setChatEnabled, flipLayout, setFlipLayout, webSearchEnabled, setWebSearchEnabled, activeChatId } = useChatStore();
-  const [showScrollButton, setShowScrollButton] = useState(false)
   const inputAreaRef = useRef<HTMLDivElement>(null)
 
   // Selection mode state and key listener
@@ -60,13 +58,6 @@ export default function Workspace() {
     addChat(newChat);
   };
 
-  const scrollToBottom = () => {
-    const scrollContainer = document.querySelector('.messages-container')
-    if (scrollContainer) {
-      scrollContainer.scrollTop = scrollContainer.scrollHeight
-    }
-  }
-
   return (
     <DndProvider backend={HTML5Backend}>
       <SidebarProvider
@@ -96,6 +87,10 @@ export default function Workspace() {
                         sdkMessages={sdkMessages}
                         setPendingUserMessage={setPendingUserMessage}
                         selectionMode={selectionMode}
+                        onSend={onSend}
+                        webSearchEnabled={webSearchEnabled}
+                        setWebSearchEnabled={setWebSearchEnabled}
+                        inputAreaRef={inputAreaRef}
                       />
                     </div>
                   </div>
@@ -135,7 +130,16 @@ export default function Workspace() {
                           chatEnabled={chatEnabled}
                           setChatEnabled={setChatEnabled}
                           flipLayout={flipLayout}
-                          setFlipLayout={setFlipLayout} status={status} pendingUserMessage={pendingUserMessage} sdkMessages={sdkMessages} setPendingUserMessage={setPendingUserMessage} selectionMode={selectionMode}
+                          setFlipLayout={setFlipLayout}
+                          status={status}
+                          pendingUserMessage={pendingUserMessage}
+                          sdkMessages={sdkMessages}
+                          setPendingUserMessage={setPendingUserMessage}
+                          selectionMode={selectionMode}
+                          onSend={onSend}
+                          webSearchEnabled={webSearchEnabled}
+                          setWebSearchEnabled={setWebSearchEnabled}
+                          inputAreaRef={inputAreaRef}
                         />
                       </div>
                     </div>
@@ -145,22 +149,6 @@ export default function Workspace() {
             ]).filter(Boolean)}
           </ResizablePanelGroup>
         </SidebarInset>
-        {/* Input bar always visible */}
-        <ChatInputArea
-          onSend={onSend}
-          status={status}
-          webSearchEnabled={webSearchEnabled}
-          setWebSearchEnabled={setWebSearchEnabled}
-          showScrollButton={showScrollButton}
-          scrollToBottom={scrollToBottom}
-          inputAreaRef={inputAreaRef}
-          canvasEnabled={canvasEnabled}
-          setCanvasEnabled={setCanvasEnabled}
-          chatEnabled={chatEnabled}
-          setChatEnabled={setChatEnabled}
-          flipLayout={flipLayout}
-          setFlipLayout={setFlipLayout}
-        />
       </SidebarProvider>
     </DndProvider>
   );
