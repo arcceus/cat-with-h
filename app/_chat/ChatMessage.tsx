@@ -90,6 +90,18 @@ const ChatMessage = React.memo(function ChatMessage({
               }
               return null;
             };
+            const findOutermostAncestorList = (node: Node | null): Element | null => {
+              let el: Element | null = node instanceof Element ? node : node?.parentElement || null;
+              let lastList: Element | null = null;
+              while (el && el !== container) {
+                const tag = el.tagName;
+                if (tag === 'UL' || tag === 'OL') {
+                  lastList = el;
+                }
+                el = el.parentElement;
+              }
+              return lastList;
+            };
             const buildLineStartIndices = (src: string) => {
               const starts: number[] = [0];
               for (let i = 0; i < src.length; i++) {
@@ -109,8 +121,11 @@ const ChatMessage = React.memo(function ChatMessage({
               const range = selection.getRangeAt(0);
               if (container.contains(range.startContainer) && container.contains(range.endContainer)) {
                 // 1) Try sourcepos-based mapping first to preserve markdown formatting
-                const startEl = closestWithSourcePos(range.startContainer);
-                const endEl = closestWithSourcePos(range.endContainer);
+                // Prefer slicing whole list blocks if selection is inside lists
+                const startListEl = findOutermostAncestorList(range.startContainer);
+                const endListEl = findOutermostAncestorList(range.endContainer);
+                const startEl = (startListEl || closestWithSourcePos(range.startContainer));
+                const endEl = (endListEl || closestWithSourcePos(range.endContainer));
                 const startPos = parseSourcePos(startEl);
                 const endPos = parseSourcePos(endEl);
                 if (startPos && endPos) {
@@ -119,11 +134,15 @@ const ChatMessage = React.memo(function ChatMessage({
                   const absEnd = toIndex(lineStarts, endPos.end.line, endPos.end.column);
                   if (absEnd > absStart) {
                     textToTransfer = message.content.slice(absStart, Math.min(absEnd, message.content.length));
+                    // Ensure trailing newline when slicing list blocks to preserve formatting
+                    if ((startListEl || endListEl) && !textToTransfer.endsWith('\n')) {
+                      textToTransfer = textToTransfer + '\n';
+                    }
                   }
                 }
                 // 2) If sourcepos failed, fallback to block-level slice
                 if (textToTransfer === message.content) {
-                  const blockEl = startEl || endEl;
+                  const blockEl = (startListEl || endListEl || startEl || endEl);
                   const blockPos = parseSourcePos(blockEl);
                   if (blockPos) {
                     const lineStarts = buildLineStartIndices(message.content);
@@ -131,6 +150,9 @@ const ChatMessage = React.memo(function ChatMessage({
                     const absEnd = toIndex(lineStarts, blockPos.end.line, blockPos.end.column);
                     if (absEnd > absStart) {
                       textToTransfer = message.content.slice(absStart, Math.min(absEnd, message.content.length));
+                      if ((startListEl || endListEl) && !textToTransfer.endsWith('\n')) {
+                        textToTransfer = textToTransfer + '\n';
+                      }
                     }
                   }
                 }

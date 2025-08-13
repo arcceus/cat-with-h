@@ -122,8 +122,16 @@ export function MarkdownRenderer({ content, status, copyToClipboard }: {
           h1: ({ children, ...props }: any) => <h1 {...props} className="text-2xl font-bold mb-3 mt-6 text-foreground select-text">{children}</h1>,
           h2: ({ children, ...props }: any) => <h2 {...props} className="text-xl font-semibold mb-2 mt-5 text-foreground select-text">{children}</h2>,
           h3: ({ children, ...props }: any) => <h3 {...props} className="text-lg font-semibold mb-2 mt-4 text-foreground select-text">{children}</h3>,
-          ul: ({ children, ...props }: any) => <ul {...props} className="mb-4 pl-6 space-y-2 text-base text-foreground select-text" style={{ listStyleType: 'disc' }}>{children}</ul>,
-          ol: ({ children, ...props }: any) => <ol {...props} className="mb-4 pl-6 space-y-2 text-base text-foreground select-text" style={{ listStyleType: 'decimal' }}>{children}</ol>,
+          ul: ({ children, ...props }: any) => (
+            <ul {...props} className="mb-4 pl-6 text-base text-foreground select-text" style={{ listStyleType: 'disc' }}>
+              {children}
+            </ul>
+          ),
+          ol: ({ children, ...props }: any) => (
+            <ol {...props} className="mb-4 pl-6 text-base text-foreground select-text" style={{ listStyleType: 'decimal' }}>
+              {children}
+            </ol>
+          ),
           li: ({ children, ...props }: any) => <li {...props} className="text-base leading-relaxed text-foreground select-text">{children}</li>,
           blockquote: ({ children, ...props }: any) => (
             <blockquote {...props} className="border-l-4 border-primary/30 pl-4 italic text-muted-foreground my-4 py-1 select-text">{children}</blockquote>
