@@ -24,18 +24,7 @@ export default function Workspace() {
   const { addChat, chats, canvasEnabled, setCanvasEnabled, chatEnabled, setChatEnabled, flipLayout, setFlipLayout, webSearchEnabled, setWebSearchEnabled, activeChatId } = useChatStore();
   const inputAreaRef = useRef<HTMLDivElement>(null)
 
-  // Selection mode state and key listener
-  const [selectionMode, setSelectionMode] = useState(false);
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if (e.ctrlKey && e.key === 'm') {
-        setSelectionMode((prev) => !prev);
-        e.preventDefault();
-      }
-    };
-    window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
-  }, []);
+  // Selection mode removed; selection is mapped to markdown automatically on drag
 
   const {
     onSend,
@@ -85,7 +74,6 @@ export default function Workspace() {
                         pendingUserMessage={pendingUserMessage}
                         sdkMessages={sdkMessages}
                         setPendingUserMessage={setPendingUserMessage}
-                        selectionMode={selectionMode}
                         onSend={onSend}
                         webSearchEnabled={webSearchEnabled}
                         setWebSearchEnabled={setWebSearchEnabled}
@@ -134,7 +122,6 @@ export default function Workspace() {
                           pendingUserMessage={pendingUserMessage}
                           sdkMessages={sdkMessages}
                           setPendingUserMessage={setPendingUserMessage}
-                          selectionMode={selectionMode}
                           onSend={onSend}
                           webSearchEnabled={webSearchEnabled}
                           setWebSearchEnabled={setWebSearchEnabled}

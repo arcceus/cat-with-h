@@ -20,16 +20,17 @@ const getCodeBlockStyle = (isWrapped: boolean) => ({
   whiteSpace: isWrapped ? 'pre-wrap' : 'pre',
 });
 
-const CodeBlock = ({ language, code, copyToClipboard, isStreaming }: {
+const CodeBlock = ({ language, code, copyToClipboard, isStreaming, htmlProps }: {
   language: string
   code: string
   copyToClipboard: (text: string) => void
   isStreaming: boolean
+  htmlProps?: any
 }) => {
   const [isWrapped, setIsWrapped] = useState(false)
 
   return (
-    <div className={cn("relative group my-2 rounded-md overflow-hidden", "codeblock-markdown")}> 
+    <div {...(htmlProps || {})} className={cn("relative group my-2 rounded-md overflow-hidden select-text", "codeblock-markdown")}> 
       <div className="flex items-center justify-between px-3 py-2 bg-muted/50 border-b border-border">
         <div className="flex items-center gap-2">
           <span className="text-xs font-medium text-muted-foreground uppercase">{language}</span>
@@ -73,26 +74,31 @@ const CodeBlock = ({ language, code, copyToClipboard, isStreaming }: {
   )
 }
 
-export function MarkdownRenderer({ content, status, copyToClipboard, selectionMode = false, onPreCopy }: {
+export function MarkdownRenderer({ content, status, copyToClipboard }: {
   content: string,
   status: string,
-  copyToClipboard: (text: string) => void,
-  selectionMode?: boolean,
-  onPreCopy?: (e: React.ClipboardEvent<HTMLPreElement>) => void
+  copyToClipboard: (text: string) => void
 }) {
   const isStreaming = status === 'streaming';
+  // remark plugin to add data-sourcepos attributes from mdast positions
+  const remarkAddSourcePos = () => (tree: any) => {
+    function visit(node: any) {
+      if (node && node.position) {
+        node.data = node.data || {};
+        node.data.hProperties = node.data.hProperties || {};
+        const pos = node.position;
+        node.data.hProperties['data-sourcepos'] = `${pos.start.line}:${pos.start.column}-${pos.end.line}:${pos.end.column}`;
+      }
+      if (node && Array.isArray(node.children)) {
+        for (const child of node.children) visit(child);
+      }
+    }
+    visit(tree);
+  };
   return (
     <div className="space-y-3">
-      {selectionMode && (
-        <pre
-          className="bg-muted/40 border border-dashed border-border rounded p-2 mb-2 text-xs font-mono whitespace-pre-wrap break-words select-text"
-          style={{ userSelect: 'text', wordBreak: 'break-word' }}
-          onCopy={onPreCopy}
-        >
-          {content}
-        </pre>
-      )}
       <ReactMarkdown
+        remarkPlugins={[remarkAddSourcePos as any]}
         components={{
           code({ inline, className, children, ...props }: any) {
             const match = /language-(\w+)/.exec(className || '')
@@ -102,22 +108,25 @@ export function MarkdownRenderer({ content, status, copyToClipboard, selectionMo
                 code={String(children).replace(/\n$/, '')}
                 copyToClipboard={copyToClipboard}
                 isStreaming={isStreaming}
+                htmlProps={props}
               />
             ) : (
-              <code className="bg-muted px-1 py-0.5 rounded text-sm font-mono" {...props}>
+              <code className="bg-muted px-1 py-0.5 rounded text-sm font-mono select-text" {...props}>
                 {children}
               </code>
             )
           },
-          p: ({ children }: any) => <p className="mb-4 text-base leading-relaxed tracking-normal text-foreground">{children}</p>,
-          h1: ({ children }: any) => <h1 className="text-2xl font-bold mb-3 mt-6 text-foreground">{children}</h1>,
-          h2: ({ children }: any) => <h2 className="text-xl font-semibold mb-2 mt-5 text-foreground">{children}</h2>,
-          h3: ({ children }: any) => <h3 className="text-lg font-semibold mb-2 mt-4 text-foreground">{children}</h3>,
-          ul: ({ children }: any) => <ul className="mb-4 pl-6 space-y-2 text-base text-foreground" style={{ listStyleType: 'disc' }}>{children}</ul>,
-          ol: ({ children }: any) => <ol className="mb-4 pl-6 space-y-2 text-base text-foreground" style={{ listStyleType: 'decimal' }}>{children}</ol>,
-          li: ({ children }: any) => <li className="text-base leading-relaxed text-foreground">{children}</li>,
-          blockquote: ({ children }: any) => (
-            <blockquote className="border-l-4 border-primary/30 pl-4 italic text-muted-foreground my-4 py-1">{children}</blockquote>
+          strong: ({ children, ...props }: any) => <strong {...props} className="font-semibold select-text">{children}</strong>,
+          em: ({ children, ...props }: any) => <em {...props} className="italic select-text">{children}</em>,
+          p: ({ children, ...props }: any) => <p {...props} className="mb-4 text-base leading-relaxed tracking-normal text-foreground select-text">{children}</p>,
+          h1: ({ children, ...props }: any) => <h1 {...props} className="text-2xl font-bold mb-3 mt-6 text-foreground select-text">{children}</h1>,
+          h2: ({ children, ...props }: any) => <h2 {...props} className="text-xl font-semibold mb-2 mt-5 text-foreground select-text">{children}</h2>,
+          h3: ({ children, ...props }: any) => <h3 {...props} className="text-lg font-semibold mb-2 mt-4 text-foreground select-text">{children}</h3>,
+          ul: ({ children, ...props }: any) => <ul {...props} className="mb-4 pl-6 space-y-2 text-base text-foreground select-text" style={{ listStyleType: 'disc' }}>{children}</ul>,
+          ol: ({ children, ...props }: any) => <ol {...props} className="mb-4 pl-6 space-y-2 text-base text-foreground select-text" style={{ listStyleType: 'decimal' }}>{children}</ol>,
+          li: ({ children, ...props }: any) => <li {...props} className="text-base leading-relaxed text-foreground select-text">{children}</li>,
+          blockquote: ({ children, ...props }: any) => (
+            <blockquote {...props} className="border-l-4 border-primary/30 pl-4 italic text-muted-foreground my-4 py-1 select-text">{children}</blockquote>
           ),
         }}
       >

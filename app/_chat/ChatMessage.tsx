@@ -2,30 +2,25 @@ import React from 'react'
 import { motion } from 'framer-motion'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
-import { Copy, RotateCcw, MousePointerClick } from 'lucide-react'
+import { Copy, RotateCcw } from 'lucide-react'
 import { MarkdownRenderer } from './markdown-renderer';
-import { MarkdownWithMarkers } from './MarkdownWithMarkers';
 
 const ChatMessage = React.memo(function ChatMessage({ 
   message, 
   status, 
   copyToClipboard,
-  selectionMode = false,
   'data-message-id': dataMessageId,
   chatId,
   messageId,
-  onToggleSelectionMode,
   onRegenerate,
   ...props 
 }: { 
   message: { id: string; role: 'user' | 'assistant'; content: string }, 
   status: string, 
   copyToClipboard: (text: string) => void,
-  selectionMode?: boolean,
   'data-message-id'?: string,
   chatId?: string,
   messageId?: string,
-  onToggleSelectionMode?: () => void,
   onRegenerate?: () => void,
 }) {
   // Optimize for streaming performance
@@ -43,7 +38,7 @@ const ChatMessage = React.memo(function ChatMessage({
           ease: isStreaming ? "easeOut" : "easeInOut" // Smoother easing for streaming
         }}
         className={cn(
-          "flex w-full mb-[40px] chat-message select-text", // ensure select-text for selection
+          "flex w-full mb-[40px] chat-message", // remove global select-text
           message.role === 'user' ? 'justify-end' : 'justify-start',
           isStreaming && 'opacity-50'
         )}
@@ -51,38 +46,120 @@ const ChatMessage = React.memo(function ChatMessage({
       >
         <div
           className={cn(
-            "max-w-[99%] rounded-lg px-4 py-3 transition-colors duration-300 relative select-text",
+            "max-w-[99%] rounded-lg px-4 py-3 transition-colors duration-300 relative",
             message.role === 'user'
               ? 'bg-primary text-primary-foreground'
               : 'bg-background',
             isStreaming && 'streaming-message' // Apply streaming optimizations
           )}
-          onDragStart={(e: React.DragEvent<HTMLDivElement>) => {
+          onDragStartCapture={(e: React.DragEvent<HTMLDivElement>) => {
+            // Cancel drags unless the user already has a text selection inside this message
+            const selection = window.getSelection();
+            const container = e.currentTarget as HTMLDivElement;
+            if (!selection || selection.rangeCount === 0 || selection.isCollapsed) {
+              e.preventDefault();
+              e.stopPropagation();
+              return;
+            }
+            const range = selection.getRangeAt(0);
+            if (!container.contains(range.startContainer) || !container.contains(range.endContainer)) {
+              e.preventDefault();
+              e.stopPropagation();
+              return;
+            }
             if (chatId) e.dataTransfer.setData('application/x-chat-id', chatId);
             if (messageId) e.dataTransfer.setData('application/x-message-id', messageId);
+
+            // Helpers declared before use
+            const parseSourcePos = (el: Element | null) => {
+              if (!el) return null as null | { start: { line: number; column: number }, end: { line: number; column: number } };
+              const sp = el.getAttribute('data-sourcepos');
+              if (!sp) return null;
+              const m = sp.match(/^(\d+):(\d+)-(\d+):(\d+)$/);
+              if (!m) return null;
+              return {
+                start: { line: Number(m[1]), column: Number(m[2]) },
+                end: { line: Number(m[3]), column: Number(m[4]) },
+              };
+            };
+            const closestWithSourcePos = (node: Node | null): Element | null => {
+              let n: Node | null = node;
+              while (n && n !== container) {
+                if (n instanceof Element && n.hasAttribute('data-sourcepos')) return n;
+                n = n.parentNode;
+              }
+              return null;
+            };
+            const buildLineStartIndices = (src: string) => {
+              const starts: number[] = [0];
+              for (let i = 0; i < src.length; i++) {
+                if (src[i] === '\n') starts.push(i + 1);
+              }
+              return starts;
+            };
+            const toIndex = (lineStarts: number[], line: number, column: number) => {
+              const base = lineStarts[Math.max(0, line - 1)] ?? 0;
+              const offset = Math.max(0, column - 1);
+              return base + offset;
+            };
+
+            let textToTransfer = message.content;
+            // If there is a user selection inside this message, prefer using it
+            if (selection && selection.rangeCount > 0 && !selection.isCollapsed) {
+              const range = selection.getRangeAt(0);
+              if (container.contains(range.startContainer) && container.contains(range.endContainer)) {
+                // 1) Try sourcepos-based mapping first to preserve markdown formatting
+                const startEl = closestWithSourcePos(range.startContainer);
+                const endEl = closestWithSourcePos(range.endContainer);
+                const startPos = parseSourcePos(startEl);
+                const endPos = parseSourcePos(endEl);
+                if (startPos && endPos) {
+                  const lineStarts = buildLineStartIndices(message.content);
+                  const absStart = toIndex(lineStarts, startPos.start.line, startPos.start.column);
+                  const absEnd = toIndex(lineStarts, endPos.end.line, endPos.end.column);
+                  if (absEnd > absStart) {
+                    textToTransfer = message.content.slice(absStart, Math.min(absEnd, message.content.length));
+                  }
+                }
+                // 2) If sourcepos failed, fallback to block-level slice
+                if (textToTransfer === message.content) {
+                  const blockEl = startEl || endEl;
+                  const blockPos = parseSourcePos(blockEl);
+                  if (blockPos) {
+                    const lineStarts = buildLineStartIndices(message.content);
+                    const absStart = toIndex(lineStarts, blockPos.start.line, blockPos.start.column);
+                    const absEnd = toIndex(lineStarts, blockPos.end.line, blockPos.end.column);
+                    if (absEnd > absStart) {
+                      textToTransfer = message.content.slice(absStart, Math.min(absEnd, message.content.length));
+                    }
+                  }
+                }
+                // 3) If still unchanged, fallback to literal match or plain text
+                if (textToTransfer === message.content) {
+                  const selectedText = selection.toString();
+                  if (selectedText && selectedText.trim().length > 0) {
+                    const idx = message.content.indexOf(selectedText);
+                    if (idx !== -1) {
+                      textToTransfer = message.content.slice(idx, idx + selectedText.length);
+                    } else {
+                      textToTransfer = selectedText;
+                    }
+                  }
+                }
+              }
+            }
+
+            // Always set text/plain so the canvas receives whatever we derived (markdown slice or fallback)
+            e.dataTransfer.setData('text/plain', textToTransfer);
           }}
         >
           {message.role === 'assistant' ? (
             <>
-              {selectionMode ? (
-                <MarkdownWithMarkers
-                  content={message.content}
-                  className="markdown-with-markers"
-                />
-              ) : (
-                <MarkdownRenderer
-                  content={message.content}
-                  status={status}
-                  copyToClipboard={copyToClipboard}
-                  selectionMode={selectionMode}
-                  onPreCopy={selectionMode ? (e => {
-                    e.preventDefault();
-                    if (e.clipboardData) {
-                      e.clipboardData.setData('text/plain', message.content);
-                    }
-                  }) : undefined}
-                />
-              )}
+              <MarkdownRenderer
+                content={message.content}
+                status={status}
+                copyToClipboard={copyToClipboard}
+              />
               {/* Typing indicator for streaming */}
               {isStreaming && (
                 <div className="flex items-center gap-1 mt-2">
@@ -105,15 +182,6 @@ const ChatMessage = React.memo(function ChatMessage({
                 >
                   <Copy className="h-3 w-3 mr-1" />
                   Copy
-                </Button>
-                <Button
-                  variant={selectionMode ? "secondary" : "ghost"}
-                  size="sm"
-                  className="h-7 px-2 text-xs"
-                  onClick={onToggleSelectionMode}
-                >
-                  <MousePointerClick className="h-3 w-3 mr-1" />
-                  {selectionMode ? 'Selection On' : 'Select' }
                 </Button>
               </div>
             </>

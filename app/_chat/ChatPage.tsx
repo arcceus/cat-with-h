@@ -42,7 +42,6 @@ interface ChatPageProps {
   pendingUserMessage: string | undefined;
   sdkMessages: any[];
   setPendingUserMessage: (v: string | undefined) => void;
-  selectionMode?: boolean;
   onSend: (input: string) => void;
   webSearchEnabled: boolean;
   setWebSearchEnabled: (v: boolean) => void;
@@ -55,7 +54,6 @@ export default function ChatPage(props: ChatPageProps) {
     pendingUserMessage,
     sdkMessages,
     setPendingUserMessage,
-    selectionMode: selectionModeProp = false,
     onSend,
     webSearchEnabled,
     setWebSearchEnabled,
@@ -68,7 +66,6 @@ export default function ChatPage(props: ChatPageProps) {
     setFlipLayout,
   } = props;
   const { activeChatId, chats, setActiveChat } = useChatStore()
-  const [selectionMode, setSelectionMode] = useState(selectionModeProp)
   const [showScrollButton, setShowScrollButton] = useState(false)
   // const [selectedModel, setSelectedModel] = useState(AI_MODELS[0])
   // const [webSearchEnabled, setWebSearchEnabled] = useState(false)
@@ -186,9 +183,6 @@ export default function ChatPage(props: ChatPageProps) {
 
   const memoizedCopyToClipboard = useCallback(copyToClipboard, [])
 
-  // Handler to toggle selection mode
-  const handleToggleSelectionMode = () => setSelectionMode((prev) => !prev)
-
   // Handler to regenerate the AI message for a given user message
   const handleRegenerate = (aiMessageId?: string) => {
     if (!activeChat || !activeChatId) return;
@@ -244,10 +238,8 @@ export default function ChatPage(props: ChatPageProps) {
                 status={status} 
                 copyToClipboard={memoizedCopyToClipboard} 
                 data-message-id={message.id}
-                selectionMode={selectionMode}
                 chatId={activeChatId}
                 messageId={message.id}
-                onToggleSelectionMode={handleToggleSelectionMode}
                 onRegenerate={() => handleRegenerate(message.id)}
               />
             ))}
