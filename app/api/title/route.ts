@@ -7,7 +7,13 @@ export async function POST(req: Request) {
 
     const result = await streamText({
       model: google('gemini-2.0-flash'),
-      messages
+      messages,
+      prompt: 'You are a helpful assistant that can generate titles for blog posts.',
+      maxTokens: 100,
+      temperature: 0.5,
+      topP: 1,
+      topK: 40,
+      frequencyPenalty: 0,
     });
 
     return result.toDataStreamResponse();

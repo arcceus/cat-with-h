@@ -24,9 +24,11 @@ interface ChatState {
   unpinChat: (chatId: string, notify?: (msg: string) => void) => Promise<void>;
   setSearch: (search: string) => void;
   updateChatMessages: (chatId: string, messages: Message[], notify?: (msg: string) => void) => Promise<void>;
+  // Track messages for unauthenticated users
   incrementGuestMessageCount: () => void;
   resetGuestMessageCount: () => void;
   canGuestSendMessage: () => boolean;
+  // Canvas settings
   canvasEnabled: boolean;
   setCanvasEnabled: (v: boolean) => void;
   chatEnabled: boolean;

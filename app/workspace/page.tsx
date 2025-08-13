@@ -37,7 +37,6 @@ export default function Workspace() {
     return () => window.removeEventListener('keydown', handler);
   }, []);
 
-  // Chat streaming logic moved to useWorkspaceChat
   const {
     onSend,
     status,

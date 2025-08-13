@@ -214,9 +214,9 @@ export default function ChatPage(props: ChatPageProps) {
     return (
       <div className="h-full flex items-center justify-center">
         <div className="text-center space-y-4">
-          <Bot className="h-12 w-12 text-muted-foreground mx-auto" />
+          {/* <Bot className="h-12 w-12 text-muted-foreground mx-auto" /> */}
           <h3 className="text-lg font-medium">No chat selected</h3>
-          <p className="text-sm text-muted-foreground">Select a chat from the sidebar to start messaging</p>
+          <p className="text-sm text-muted-foreground">Select or create a chat from the sidebar to start messaging</p>
         </div>
       </div>
     )
