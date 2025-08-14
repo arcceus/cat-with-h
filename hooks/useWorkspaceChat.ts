@@ -78,6 +78,20 @@ export function useWorkspaceChat(activeChatId: string | undefined) {
       }
       incrementGuestMessageCount();
     }
+    // If this is the very first user message after creating a new chat,
+    // update the chat title to the first user message immediately.
+    if (activeChatId && activeChat) {
+      const isDefaultTitle = activeChat.title?.startsWith('New Chat');
+      const isFirstMessage = (activeChat.messages?.length || 0) === 0;
+      if (isDefaultTitle && isFirstMessage) {
+        // Use the first line, trimmed, capped at 80 chars
+        const firstLine = (input.split('\n')[0] || '').trim();
+        const newTitle = firstLine.length > 80 ? firstLine.slice(0, 77).trimEnd() + '…' : firstLine || 'New Chat';
+        if (newTitle && newTitle !== activeChat.title) {
+          renameChat(activeChatId, newTitle);
+        }
+      }
+    }
     userMessageRef.current = input || '';
     setPendingUserMessage(input);
     append({ role: 'user', content: input });
