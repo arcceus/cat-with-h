@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { useChatStore } from '@/store/chatStore';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+// import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export default function TestModelsPage() {
   const [status, setStatus] = useState<Record<string, 'idle' | 'loading' | 'success' | 'error'>>({
@@ -151,14 +151,8 @@ export default function TestModelsPage() {
         </Button>
       </div>
 
-      <Tabs defaultValue="gemini" className="w-full">
-        <TabsList>
-          <TabsTrigger value="gemini">Gemini</TabsTrigger>
-          <TabsTrigger value="ollama">Ollama</TabsTrigger>
-          <TabsTrigger value="comparison">Side by Side</TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="gemini">
+      <div className="w-full">
+        <div className="grid grid-cols-2 gap-4">
           <div className="border rounded p-4">
             <h2 className="font-bold mb-2">Gemini Response:</h2>
             {status.gemini === 'loading' && <p>Loading...</p>}
@@ -171,9 +165,7 @@ export default function TestModelsPage() {
               {responses.gemini || 'No response data received'}
             </div>
           </div>
-        </TabsContent>
-        
-        <TabsContent value="ollama">
+          
           <div className="border rounded p-4">
             <h2 className="font-bold mb-2">Ollama Response:</h2>
             {status.ollama === 'loading' && <p>Loading...</p>}
@@ -186,38 +178,8 @@ export default function TestModelsPage() {
               {responses.ollama || 'No response data received'}
             </div>
           </div>
-        </TabsContent>
-        
-        <TabsContent value="comparison">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="border rounded p-4">
-              <h2 className="font-bold mb-2">Gemini Response:</h2>
-              {status.gemini === 'loading' && <p>Loading...</p>}
-              {errors.gemini && (
-                <div className="mb-4 p-4 bg-red-50 text-red-700 rounded">
-                  <p>{errors.gemini}</p>
-                </div>
-              )}
-              <div className="p-4 bg-gray-50 rounded whitespace-pre-wrap font-mono text-sm max-h-96 overflow-auto">
-                {responses.gemini || 'No response data received'}
-              </div>
-            </div>
-            
-            <div className="border rounded p-4">
-              <h2 className="font-bold mb-2">Ollama Response:</h2>
-              {status.ollama === 'loading' && <p>Loading...</p>}
-              {errors.ollama && (
-                <div className="mb-4 p-4 bg-red-50 text-red-700 rounded">
-                  <p>{errors.ollama}</p>
-                </div>
-              )}
-              <div className="p-4 bg-gray-50 rounded whitespace-pre-wrap font-mono text-sm max-h-96 overflow-auto">
-                {responses.ollama || 'No response data received'}
-              </div>
-            </div>
-          </div>
-        </TabsContent>
-      </Tabs>
+        </div>
+      </div>
 
       <div className="mt-8 p-4 bg-yellow-50 rounded">
         <h2 className="font-bold mb-2">Instructions:</h2>

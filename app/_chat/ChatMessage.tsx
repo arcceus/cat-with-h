@@ -25,6 +25,8 @@ const ChatMessage = React.memo(function ChatMessage({
 }) {
   // Optimize for streaming performance
   const isStreaming = status === 'streaming' && message.id === 'pending-ai'
+  const isThinking = (status === 'loading' || status === 'submitted') && message.id === 'thinking-ai'
+  const isSubmitting = status === 'submitted' && message.id === 'pending-user'
 
   return (
     <div className="w-full max-w-3xl mx-auto">
@@ -34,13 +36,13 @@ const ChatMessage = React.memo(function ChatMessage({
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -10 }}
         transition={{ 
-          duration: isStreaming ? 0.1 : 0.2, // Faster animation for streaming
-          ease: isStreaming ? "easeOut" : "easeInOut" // Smoother easing for streaming
+          duration: isStreaming || isThinking || isSubmitting ? 0.1 : 0.2, // Faster animation for streaming, thinking, and submitting
+          ease: isStreaming || isThinking || isSubmitting ? "easeOut" : "easeInOut" // Smoother easing for streaming, thinking, and submitting
         }}
         className={cn(
           "flex w-full mb-[40px] chat-message", // remove global select-text
           message.role === 'user' ? 'justify-end' : 'justify-start',
-          isStreaming && 'opacity-50'
+          (isStreaming || isThinking || isSubmitting) && 'opacity-50'
         )}
         data-message-id={dataMessageId}
       >
@@ -50,7 +52,7 @@ const ChatMessage = React.memo(function ChatMessage({
             message.role === 'user'
               ? 'bg-primary text-primary-foreground'
               : 'bg-background',
-            isStreaming && 'streaming-message' // Apply streaming optimizations
+            (isStreaming || isThinking || isSubmitting) && 'streaming-message' // Apply streaming optimizations
           )}
           onDragStartCapture={(e: React.DragEvent<HTMLDivElement>) => {
             // Cancel drags unless the user already has a text selection inside this message
@@ -177,11 +179,24 @@ const ChatMessage = React.memo(function ChatMessage({
         >
           {message.role === 'assistant' ? (
             <>
-              <MarkdownRenderer
-                content={message.content}
-                status={status}
-                copyToClipboard={copyToClipboard}
-              />
+              {/* Special handling for thinking state */}
+              {isThinking ? (
+                <div className="flex items-center gap-3 py-2">
+                  <div className="flex space-x-1">
+                    <div className="w-2 h-2 bg-primary/60 rounded-full animate-bounce"></div>
+                    <div className="w-2 h-2 bg-primary/60 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                    <div className="w-2 h-2 bg-primary/60 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                  </div>
+                  <span className="text-sm text-muted-foreground italic">{message.content}</span>
+                </div>
+              ) : (
+                <MarkdownRenderer
+                  content={message.content}
+                  status={status}
+                  copyToClipboard={copyToClipboard}
+                />
+              )}
+              
               {/* Typing indicator for streaming */}
               {isStreaming && (
                 <div className="flex items-center gap-1 mt-2">
@@ -193,23 +208,37 @@ const ChatMessage = React.memo(function ChatMessage({
                   <span className="text-xs text-muted-foreground ml-2">AI is typing...</span>
                 </div>
               )}
-              {/* Action buttons */}
-              <div className="flex items-center gap-2 pt-2">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-7 px-2 text-xs"
-                  // Always copy the plain markdown text, not HTML
-                  onClick={() => copyToClipboard(message.content)}
-                >
-                  <Copy className="h-3 w-3 mr-1" />
-                  Copy
-                </Button>
-              </div>
+              
+              {/* Action buttons - only show when not thinking */}
+              {!isThinking && (
+                <div className="flex items-center gap-2 pt-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 px-2 text-xs"
+                    // Always copy the plain markdown text, not HTML
+                    onClick={() => copyToClipboard(message.content)}
+                  >
+                    <Copy className="h-3 w-3 mr-1" />
+                    Copy
+                  </Button>
+                </div>
+              )}
             </>
           ) : (
             <div>
               <p className="text-sm">{message.content || ''}</p>
+              {/* Show loading indicator for submitted user messages */}
+              {isSubmitting && (
+                <div className="flex items-center gap-2 mt-2">
+                  <div className="flex space-x-1">
+                    <div className="w-2 h-2 bg-primary-foreground/60 rounded-full animate-bounce"></div>
+                    <div className="w-2 h-2 bg-primary-foreground/60 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                    <div className="w-2 h-2 bg-primary-foreground/60 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                  </div>
+                  <span className="text-xs text-primary-foreground/70">Sending...</span>
+                </div>
+              )}
             </div>
           )}
         </div>

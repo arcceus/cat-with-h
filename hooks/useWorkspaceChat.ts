@@ -11,6 +11,7 @@ export function useWorkspaceChat(activeChatId: string | undefined) {
   const userMessageRef = useRef<string>('');
   const [pendingUserMessage, setPendingUserMessage] = useState<string | undefined>(undefined);
   const [customApiKey, setCustomApiKey] = useState<string | null>(null);
+  const [isSubmitted, setIsSubmitted] = useState(false);
   const { isSignedIn } = useUser();
   const { generateChatTitle } = useChatTitleAI();
 
@@ -62,6 +63,7 @@ export function useWorkspaceChat(activeChatId: string | undefined) {
         // Clear refs after storing
         userMessageRef.current = ''
         setPendingUserMessage(undefined)
+        setIsSubmitted(false) // Reset submitted state when finished
         
         // AI title generation: only if this is the first message and title is default
         // Use fresh chat state after update
@@ -79,6 +81,16 @@ export function useWorkspaceChat(activeChatId: string | undefined) {
       }
     },
   });
+
+  // Create a composite status that includes our submitted state
+  const compositeStatus = isSubmitted && (status === 'ready' || status === 'error') ? 'submitted' : status;
+
+  // Reset submitted state when streaming starts
+  useEffect(() => {
+    if (status === 'streaming' && isSubmitted) {
+      setIsSubmitted(false);
+    }
+  }, [status, isSubmitted]);
 
   const onSend = (input: string) => {
     if (!input.trim()) return;
@@ -105,12 +117,13 @@ export function useWorkspaceChat(activeChatId: string | undefined) {
     }
     userMessageRef.current = input || '';
     setPendingUserMessage(input);
+    setIsSubmitted(true); // Set submitted state immediately when user sends message
     append({ role: 'user', content: input });
   };
 
   return {
     onSend,
-    status,
+    status: compositeStatus,
     sdkMessages,
     pendingUserMessage,
     setPendingUserMessage,

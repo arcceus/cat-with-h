@@ -1,9 +1,6 @@
 "use client"
 
 import { useChatStore } from '../../store/chatStore'
-import { 
-  Bot
-} from 'lucide-react'
 import { useRef, useEffect, useLayoutEffect } from 'react'
 import type { Message } from '../types'
 import React, { useCallback } from 'react'
@@ -85,6 +82,11 @@ export default function ChatPage(props: ChatPageProps) {
   // Add pending user message to the UI
   if (pendingUserMessage) {
     flatMessages.push({ id: 'pending-user', role: 'user', content: pendingUserMessage })
+  }
+
+  // Show thinking state when waiting for LLM to respond
+  if ((status === 'loading' || status === 'submitted') && pendingUserMessage) {
+    flatMessages.push({ id: 'thinking-ai', role: 'assistant', content: 'hmm... thinking' })
   }
 
   // If streaming, show the current AI response
@@ -260,12 +262,6 @@ export default function ChatPage(props: ChatPageProps) {
           showScrollButton={showScrollButton}
           scrollToBottom={scrollToBottom}
           inputAreaRef={inputAreaRef}
-          canvasEnabled={canvasEnabled}
-          setCanvasEnabled={setCanvasEnabled}
-          chatEnabled={chatEnabled}
-          setChatEnabled={setChatEnabled}
-          flipLayout={flipLayout}
-          setFlipLayout={setFlipLayout}
         />
       </div>
     </div>

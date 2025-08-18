@@ -24,13 +24,13 @@ export async function POST(req: NextRequest) {
     console.log('Calling Ollama API with messages:', inputMessages);
     
     // Call Ollama API directly with streaming
-    const response = await fetch('http://natural-markets.gl.at.ply.gg:28881/api/chat', {
+    const response = await fetch('http://green-building.gl.at.ply.gg:12533/api/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         model: 'gpt-oss:20b',
         messages: inputMessages,
-        stream: true,
+        stream: false,
       }),
     });
 
@@ -47,17 +47,27 @@ export async function POST(req: NextRequest) {
           return;
         }
 
+        let buffer = ''; // Buffer to accumulate incomplete JSON objects
+
         try {
           while (true) {
             const { done, value } = await reader.read();
             if (done) break;
 
-            const chunk = new TextDecoder().decode(value);
-            const lines = chunk.split('\n').filter(line => line.trim());
+            // Accumulate chunks in buffer
+            buffer += new TextDecoder().decode(value);
+            
+            // Process complete lines from buffer
+            const lines = buffer.split('\n');
+            // Keep the last potentially incomplete line in buffer
+            buffer = lines.pop() || '';
             
             for (const line of lines) {
+              const trimmedLine = line.trim();
+              if (!trimmedLine) continue;
+              
               try {
-                const data = JSON.parse(line);
+                const data = JSON.parse(trimmedLine);
                 if (data.message?.content) {
                   // AI SDK data stream format
                   const formatted = `0:${JSON.stringify(data.message.content)}\n`;
@@ -69,10 +79,30 @@ export async function POST(req: NextRequest) {
                   return;
                 }
               } catch (parseError) {
-                console.log('Skipping invalid JSON line:', line);
+                console.log('Skipping invalid JSON line:', trimmedLine);
               }
             }
           }
+          
+          // Process any remaining data in buffer after stream ends
+          if (buffer.trim()) {
+            try {
+              const data = JSON.parse(buffer.trim());
+              if (data.message?.content) {
+                const formatted = `0:${JSON.stringify(data.message.content)}\n`;
+                controller.enqueue(new TextEncoder().encode(formatted));
+              }
+              
+              if (data.done) {
+                controller.close();
+                return;
+              }
+            } catch (parseError) {
+              console.log('Skipping invalid JSON in final buffer:', buffer.trim());
+            }
+          }
+          
+          controller.close();
         } catch (error) {
           console.error('Stream reading error:', error);
           controller.error(error);

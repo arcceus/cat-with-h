@@ -57,7 +57,7 @@ const ChatInputArea: React.FC<ChatInputAreaProps> = ({
               }}
               placeholder="Type your message here..."
               className="w-full min-h-[60px] bg-muted/50 border-0 shadow-none focus:ring-0 focus:border-0 text-base px-2 resize-none outline-none"
-              disabled={status === 'streaming' || status === 'submitted'}
+              disabled={status === 'streaming' || status === 'submitted' || status === 'loading'}
               style={{ 
                 background: 'transparent',
                 color: 'inherit'
@@ -89,7 +89,7 @@ const ChatInputArea: React.FC<ChatInputAreaProps> = ({
                 type="submit"
                 size="icon"
                 className="rounded-full h-8 w-8 p-0 bg-primary text-primary-foreground hover:bg-primary/90"
-                disabled={status === 'streaming' || status === 'submitted' || !input.trim()}
+                disabled={status === 'streaming' || status === 'submitted' || status === 'loading' || !input.trim()}
               >
                 <ChevronUp className="h-4 w-4" />
               </Button>
