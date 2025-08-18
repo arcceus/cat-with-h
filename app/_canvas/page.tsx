@@ -2,12 +2,9 @@
 import React, { useState, useRef, useCallback } from 'react';
 import {
   ReactFlow,
-  MiniMap,
-  Controls,
   Background,
   addEdge,
   Connection,
-  Node,
   Edge,
   NodeTypes,
   useNodesState,
@@ -36,17 +33,9 @@ const edgeTypes = {
   default: CustomEdge,
 };
 
-const initialNodes: Node[] = [
-  { id: 'n1', type: 'custom', position: { x: 0, y: 0 }, data: { subtitle: 'Node 1' } },
-  { id: 'n2', type: 'custom', position: { x: 0, y: 100 }, data: { subtitle: 'Node 2' } },
-];
-const initialEdges: Edge[] = [{ id: 'n1-n2', source: 'n1', target: 'n2', type: 'default' }];
 
-// Utility to extract HTML from a DOM element by id
-function getHtmlFromElementById(id: string): string | null {
-  const el = document.getElementById(id);
-  return el ? el.innerHTML : null;
-}
+
+
 
 export default function Canvas() {
   return (
@@ -58,8 +47,8 @@ export default function Canvas() {
 
 function CanvasInner() {
   const { canvases, currentKey, saveCanvas } = useCanvasStore();
-  const [nodes, setNodes, onNodesChange] = useNodesState(canvases[currentKey]?.nodes || initialNodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState(canvases[currentKey]?.edges || initialEdges);
+  const [nodes, setNodes, onNodesChange] = useNodesState(canvases[currentKey]?.nodes);
+  const [edges, setEdges, onEdgesChange] = useEdgesState(canvases[currentKey]?.edges);
   const [menu, setMenu] = useState<MenuState>(null);
   const ref = useRef<HTMLDivElement>(null);
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -95,8 +84,8 @@ function CanvasInner() {
 
   // When canvas key changes, load nodes/edges
   React.useEffect(() => {
-    setNodes(canvases[currentKey]?.nodes || initialNodes);
-    setEdges(canvases[currentKey]?.edges || initialEdges);
+    setNodes(canvases[currentKey]?.nodes);
+    setEdges(canvases[currentKey]?.edges);
   }, [currentKey]);
 
   const colorMode = theme === "dark" ? "dark" : "light";
@@ -161,8 +150,6 @@ function CanvasInner() {
         }}
         onDragOver={event => event.preventDefault()}
       >
-        {/* <MiniMap /> */}
-        {/* <Controls position="top-left" /> */}
         <Background />
       </ReactFlow>
     </div>

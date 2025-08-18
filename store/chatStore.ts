@@ -10,6 +10,8 @@ interface Chat {
   title: string;
 }
 
+export type AIModel = 'gemini' | 'ollama';
+
 interface ChatState {
   chats: Chat[];
   activeChatId: string | null;
@@ -37,6 +39,9 @@ interface ChatState {
   setFlipLayout: (v: boolean) => void;
   webSearchEnabled: boolean;
   setWebSearchEnabled: (v: boolean) => void;
+  // Model selection
+  selectedModel: AIModel;
+  setSelectedModel: (model: AIModel) => void;
   hydrateFromServer: (onError?: (msg: string) => void) => Promise<void>;
 }
 
@@ -78,6 +83,11 @@ export const useChatStore = create<ChatState>()(
       setFlipLayout: (v: boolean) => set({ flipLayout: v }),
       webSearchEnabled: false,
       setWebSearchEnabled: (v: boolean) => set({ webSearchEnabled: v }),
+      selectedModel: 'gemini' as AIModel,
+      setSelectedModel: (model: AIModel) => {
+        set({ selectedModel: model });
+        localStorage.setItem('selected-ai-model', model);
+      },
       incrementGuestMessageCount: () => set((state) => ({ guestMessageCount: state.guestMessageCount + 1 })),
       resetGuestMessageCount: () => set({ guestMessageCount: 0 }),
       canGuestSendMessage: () => get().guestMessageCount < 5,
@@ -217,6 +227,7 @@ export const useChatStore = create<ChatState>()(
         chatEnabled: state.chatEnabled,
         flipLayout: state.flipLayout,
         webSearchEnabled: state.webSearchEnabled,
+        selectedModel: state.selectedModel,
       }),
     }
   )

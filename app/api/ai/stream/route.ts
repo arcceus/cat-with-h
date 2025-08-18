@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
     model = google('gemini-2.0-flash');
   }
 
-  // Call Gemini (or other AI) and stream the response
+  // Call Gemini and stream the response
   const aiStream = await streamText({
     model,
     messages: inputMessages,

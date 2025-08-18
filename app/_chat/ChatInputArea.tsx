@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { Search, Paperclip, ChevronDown, ChevronUp } from 'lucide-react'
 import type { RefObject } from 'react'
-import { Switch } from '@/components/ui/switch'
+import ModelSelector from './ModelSelector'
 
 interface ChatInputAreaProps {
   onSend: (input: string) => void,
@@ -13,12 +13,6 @@ interface ChatInputAreaProps {
   showScrollButton: boolean,
   scrollToBottom: () => void,
   inputAreaRef: RefObject<HTMLDivElement | null>,
-  canvasEnabled: boolean,
-  setCanvasEnabled: (v: boolean) => void,
-  chatEnabled: boolean,
-  setChatEnabled: (v: boolean) => void,
-  flipLayout: boolean,
-  setFlipLayout: (v: boolean) => void,
 }
 
 const ChatInputArea: React.FC<ChatInputAreaProps> = ({
@@ -29,12 +23,6 @@ const ChatInputArea: React.FC<ChatInputAreaProps> = ({
   showScrollButton,
   scrollToBottom,
   inputAreaRef,
-  canvasEnabled,
-  setCanvasEnabled,
-  chatEnabled,
-  setChatEnabled,
-  flipLayout,
-  setFlipLayout,
 }) => {
   const [input, setInput] = useState('')
   const textareaRef = useRef<HTMLTextAreaElement>(null)
@@ -78,6 +66,7 @@ const ChatInputArea: React.FC<ChatInputAreaProps> = ({
             {/* Controls row below input: toggles, model, web, attach left; send right */}
             <div className="flex items-center justify-between mt-2">
               <div className="flex items-start gap-1">
+                <ModelSelector />
                 <Button
                   type="button"
                   variant={webSearchEnabled ? "secondary" : "ghost"}

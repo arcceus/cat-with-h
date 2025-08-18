@@ -1,5 +1,6 @@
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -98,7 +99,7 @@ export function MarkdownRenderer({ content, status, copyToClipboard }: {
   return (
     <div className="space-y-3">
       <ReactMarkdown
-        remarkPlugins={[remarkAddSourcePos as any]}
+        remarkPlugins={[remarkGfm, remarkAddSourcePos as any]}
         components={{
           code({ inline, className, children, ...props }: any) {
             const match = /language-(\w+)/.exec(className || '')
@@ -135,6 +136,39 @@ export function MarkdownRenderer({ content, status, copyToClipboard }: {
           li: ({ children, ...props }: any) => <li {...props} className="text-base leading-relaxed text-foreground select-text">{children}</li>,
           blockquote: ({ children, ...props }: any) => (
             <blockquote {...props} className="border-l-4 border-primary/30 pl-4 italic text-muted-foreground my-4 py-1 select-text">{children}</blockquote>
+          ),
+          // Table components
+          table: ({ children, ...props }: any) => (
+            <div className="my-4 overflow-x-auto">
+              <table {...props} className="min-w-full border-collapse border border-border rounded-md select-text">
+                {children}
+              </table>
+            </div>
+          ),
+          thead: ({ children, ...props }: any) => (
+            <thead {...props} className="bg-muted/50">
+              {children}
+            </thead>
+          ),
+          tbody: ({ children, ...props }: any) => (
+            <tbody {...props}>
+              {children}
+            </tbody>
+          ),
+          tr: ({ children, ...props }: any) => (
+            <tr {...props} className="border-b border-border hover:bg-muted/25 transition-colors">
+              {children}
+            </tr>
+          ),
+          th: ({ children, ...props }: any) => (
+            <th {...props} className="border border-border px-4 py-2 text-left font-semibold text-foreground bg-muted/30">
+              {children}
+            </th>
+          ),
+          td: ({ children, ...props }: any) => (
+            <td {...props} className="border border-border px-4 py-2 text-foreground">
+              {children}
+            </td>
           ),
         }}
       >

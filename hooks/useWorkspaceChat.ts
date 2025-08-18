@@ -1,5 +1,5 @@
 import { useChat } from '@ai-sdk/react';
-import { useChatStore } from '@/store/chatStore';
+import { useChatStore, type AIModel } from '@/store/chatStore';
 import { useRef, useState, useEffect } from 'react';
 import type { Message } from '../app/types';
 import { useUser } from '@clerk/nextjs';
@@ -7,18 +7,29 @@ import { toast } from 'sonner';
 import { useChatTitleAI } from './useChatTitleAI';
 
 export function useWorkspaceChat(activeChatId: string | undefined) {
-  const { updateChatMessages, chats, guestMessageCount, incrementGuestMessageCount, canGuestSendMessage, renameChat } = useChatStore();
+  const { updateChatMessages, chats, guestMessageCount, incrementGuestMessageCount, canGuestSendMessage, renameChat, selectedModel } = useChatStore();
   const userMessageRef = useRef<string>('');
   const [pendingUserMessage, setPendingUserMessage] = useState<string | undefined>(undefined);
   const [customApiKey, setCustomApiKey] = useState<string | null>(null);
   const { isSignedIn } = useUser();
   const { generateChatTitle } = useChatTitleAI();
 
-  // Load custom API key from localStorage
+  // Load custom API key and selected model from localStorage
   useEffect(() => {
     const storedKey = localStorage.getItem('custom-gemini-api-key');
     setCustomApiKey(storedKey);
+    
+    // Load selected model from localStorage if available
+    const storedModel = localStorage.getItem('selected-ai-model');
+    if (storedModel === 'gemini' || storedModel === 'ollama') {
+      useChatStore.getState().setSelectedModel(storedModel);
+    }
   }, []);
+
+  // Determine API endpoint based on selected model
+  const apiEndpoint = selectedModel === 'ollama' 
+    ? '/api/ai/ollama/stream'
+    : '/api/ai/stream';
 
   const activeChat = chats.find(chat => chat.chatId === activeChatId);
 
@@ -29,10 +40,10 @@ export function useWorkspaceChat(activeChatId: string | undefined) {
     setInput
   } = useChat({
     id: activeChatId || undefined,
-    api: '/api/ai/stream',
+    api: apiEndpoint,
     body: {
       chatId: activeChatId,
-      customApiKey: customApiKey || undefined,
+      customApiKey: selectedModel === 'gemini' ? (customApiKey || undefined) : undefined,
     },
     onFinish: async (finalMessage: any) => {
       if (activeChatId && userMessageRef.current) {

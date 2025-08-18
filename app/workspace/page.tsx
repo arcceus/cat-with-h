@@ -60,7 +60,7 @@ export default function Workspace() {
           <ResizablePanelGroup direction="horizontal" className="h-full w-full">
             {(!flipLayout ? [
               chatEnabled && (
-                <ResizablePanel key="chat" defaultSize={60} minSize={55} maxSize={70}>
+                <ResizablePanel key="chat" defaultSize={55} minSize={55} maxSize={70}>
                   <div className="h-full w-full">
                     <div className="h-full w-full rounded-xl overflow-hidden">
                       <ChatPage
@@ -86,7 +86,7 @@ export default function Workspace() {
               canvasEnabled && (
                 <React.Fragment key="canvas-handle">
                   <ResizableHandle />
-                  <ResizablePanel defaultSize={40} minSize={20}>
+                  <ResizablePanel defaultSize={45} minSize={20}>
                     <div className="h-full w-full">
                       <div className="h-full w-full overflow-hidden">
                         <Canvas />
@@ -97,7 +97,7 @@ export default function Workspace() {
               )
             ] : [
               canvasEnabled && (
-                <ResizablePanel key="canvas-flipped" defaultSize={40} minSize={20}>
+                <ResizablePanel key="canvas-flipped" defaultSize={45} minSize={20}>
                   <div className="h-full w-full">
                     <div className="h-full w-full overflow-hidden">
                       <Canvas />
@@ -108,7 +108,7 @@ export default function Workspace() {
               chatEnabled && (
                 <React.Fragment key="chat-handle">
                   <ResizableHandle />
-                  <ResizablePanel defaultSize={60} minSize={55} maxSize={70}>
+                  <ResizablePanel defaultSize={55} minSize={55} maxSize={70}>
                     <div className="h-full w-full">
                       <div className="h-full w-full rounded-xl overflow-hidden">
                         <ChatPage
